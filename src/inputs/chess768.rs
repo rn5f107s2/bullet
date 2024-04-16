@@ -37,8 +37,8 @@ impl Iterator for Chess768Iter {
             let c = usize::from(piece & 8 > 0);
             let pc = 64 * usize::from(piece & 7);
             let sq = usize::from(square);
-            let wfeat = [0, 384][c] + pc + sq;
-            let bfeat = [384, 0][c] + pc + (sq ^ 56);
+            let wfeat = [0, 384][c] + pc + (sq ^ 7); 
+            let bfeat = [384, 0][c] + pc + (sq ^ 63);
             (wfeat, bfeat)
         })
     }
