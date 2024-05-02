@@ -25,21 +25,21 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "moly_20240416".to_string(),
+        net_id: "moly_20240501_old".to_string(),
         eval_scale: 400.0,
         ft_regularisation: 0.0,
         batch_size: 16384,
-        batches_per_superbatch: 22204,
+        batches_per_superbatch: 23137,
         start_superbatch: 1,
         end_superbatch: 40,
-        wdl_scheduler: WdlScheduler::Constant { value: 1 },
+        wdl_scheduler: WdlScheduler::Constant { value: 1.0 },
         lr_scheduler: LrScheduler::Step { start: 0.001, gamma: 0.1, step: 15 },
         loss_function: Loss::SigmoidMSE,
-        save_rate: 1,
+        save_rate: 5,
     };
 
     let settings =
-        LocalSettings { threads: 4, data_file_paths: vec!["data/MolyAllv6.bullet"], output_directory: "checkpoints" };
+        LocalSettings { threads: 4, data_file_paths: vec!["data/MolyAllv9.bullet"], output_directory: "checkpoints" };
 
     trainer.run(&schedule, &settings);
 }
