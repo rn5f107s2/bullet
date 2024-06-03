@@ -10,7 +10,7 @@ use bullet_lib::{
 };
 
 const HIDDEN_SIZE: usize = 256;
-const SCALE: i32 = 400;
+const SCALE: i32 = 133;
 const QA: i32 = 255;
 const QB: i32 = 64;
 
@@ -25,107 +25,38 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "moly_20240501_old".to_string(),
-        eval_scale: 400.0,
+        net_id: "moly_20240603".to_string(),
+        eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
         batches_per_superbatch: 23137,
         start_superbatch: 1,
         end_superbatch: 40,
-        wdl_scheduler: WdlScheduler::Constant { value: 1.0 },
+        wdl_scheduler: WdlScheduler::Constant { value: 0.5 },
         lr_scheduler: LrScheduler::Step { start: 0.001, gamma: 0.1, step: 15 },
         loss_function: Loss::SigmoidMSE,
         save_rate: 5,
     };
 
     let settings =
-        LocalSettings { threads: 4, data_file_paths: vec!["data/MolyAllv9.bullet"], output_directory: "checkpoints" };
+        LocalSettings { threads: 4, data_file_paths: vec!["data/MolyCurrentShuffled.bullet"], output_directory: "checkpoints" };
 
     trainer.run(&schedule, &settings);
-}
 
-/*
-This is how you would load the network in rust.
-Commented out because it will error if it can't find the file.
-static NNUE: Network =
-    unsafe { std::mem::transmute(*include_bytes!("../checkpoints/simple-10/simple-10.bin")) };
-*/
-
-#[inline]
-/// Clipped ReLU - Activation Function.
-/// Note that this takes the i16s in the accumulator to i32s.
-fn crelu(x: i16) -> i32 {
-    i32::from(x).clamp(0, QA)
-}
-
-/// This is the quantised format that bullet outputs.
-#[repr(C)]
-pub struct Network {
-    /// Column-Major `HIDDEN_SIZE x 768` matrix.
-    feature_weights: [Accumulator; 768],
-    /// Vector with dimension `HIDDEN_SIZE`.
-    feature_bias: Accumulator,
-    /// Column-Major `1 x (2 * HIDDEN_SIZE)`
-    /// matrix, we use it like this to make the
-    /// code nicer in `Network::evaluate`.
-    output_weights: [i16; 2 * HIDDEN_SIZE],
-    /// Scalar output bias.
-    output_bias: i16,
-}
-
-impl Network {
-    /// Calculates the output of the network, starting from the already
-    /// calculated hidden layer (done efficiently during makemoves).
-    pub fn evaluate(&self, us: &Accumulator, them: &Accumulator) -> i32 {
-        // Initialise output with bias.
-        let mut output = i32::from(self.output_bias);
-
-        // Side-To-Move Accumulator -> Output.
-        for (&input, &weight) in us.vals.iter().zip(&self.output_weights[..HIDDEN_SIZE]) {
-            output += crelu(input) * i32::from(weight);
-        }
-
-        // Not-Side-To-Move Accumulator -> Output.
-        for (&input, &weight) in them.vals.iter().zip(&self.output_weights[HIDDEN_SIZE..]) {
-            output += crelu(input) * i32::from(weight);
-        }
-
-        // Apply eval scale.
-        output *= SCALE;
-
-        // Remove quantisation.
-        output /= QA * QB;
-
-        output
-    }
-}
-
-/// A column of the feature-weights matrix.
-/// Note the `align(64)`.
-#[derive(Clone, Copy)]
-#[repr(C, align(64))]
-pub struct Accumulator {
-    vals: [i16; HIDDEN_SIZE],
-}
-
-impl Accumulator {
-    /// Initialised with bias so we can just efficiently
-    /// operate on it afterwards.
-    pub fn new(net: &Network) -> Self {
-        net.feature_bias
-    }
-
-    /// Add a feature to an accumulator.
-    pub fn add_feature(&mut self, feature_idx: usize, net: &Network) {
-        for (i, d) in self.vals.iter_mut().zip(&net.feature_weights[feature_idx].vals) {
-            *i += *d
-        }
-    }
-
-    /// Remove a feature from an accumulator.
-    pub fn remove_feature(&mut self, feature_idx: usize, net: &Network) {
-        for (i, d) in self.vals.iter_mut().zip(&net.feature_weights[feature_idx].vals) {
-            *i -= *d
-        }
+    for fen in [
+        "8/8/4kpp1/3p1b2/p6P/2B5/6P1/6K1 b - - 2 47", //https://www.chessgames.com/perl/chessgame?gid=1143956, Bh3!
+        "1r4nk/1p1qb2p/3p1r2/p1pPp3/2P1Pp2/5P1P/PP1QNBRK/5R2 b - - 3 30", //https://www.chessgames.com/perl/chessgame?gid=1084375, Qxh3
+        "4r3/1k3p1p/2pr4/2Bn4/PP6/3B1pP1/R3p2P/4R1K1 b - - 0 33", //Nf4
+        "r4rk1/pp3pbp/1qp3p1/2B5/2BP2b1/Q1n2N2/P4PPP/3RK2R b K - 1 16", //https://www.chessgames.com/perl/chessgame?gid=1008361 Be6
+        "2r2rk1/1bpR1p2/1pq1pQp1/p3P2p/P1PR3P/5N2/2P2PPK/8 w - - 2 32", //https://www.chessgames.com/perl/chessgame?gid=1124533 Kg3
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", //startpos
+        "r1b1k2r/1p2bpp1/1qn1p3/p1ppPn2/5P1p/1P1P1N1P/PBPQN1P1/1K1R1B1R b kq - 1 13",
+        "r1bq1rk1/pp2ppbp/2np1np1/8/3NP3/2N1BP2/PPPQ2PP/2KR1B1R b - - 4 9", //d5
+        "8/p4p2/5pkp/1pr5/2P1KP2/6P1/P1R4P/8 b - - 1 32", //Rxc4 0-1
+        "1rqb1rk1/3b1ppp/3p4/1p1Np3/p3P3/P1PQ4/1P2BPPP/3R1RK1 w - - 6 22"
+    ] {
+        let eval = trainer.eval(fen);
+        println!("FEN: {fen}");
+        println!("EVAL: {}", 133.0 * eval);
     }
 }

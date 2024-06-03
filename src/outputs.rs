@@ -46,3 +46,19 @@ impl OutputBuckets<ChessBoard> for OCB {
         if pc1 != pc2 && sq1 != sq2 && b3 == None { 1 } else { 0 }
     }
 }
+
+#[derive(Clone, Copy, Default)]
+pub struct MaterialDist;
+impl OutputBuckets<ChessBoard> for MaterialDist {
+    const BUCKETS: usize = 8;
+
+    fn bucket(&self, pos: &ChessBoard) -> u8 {
+        let mut c = [0, 0, 0, 0, 0, 0];
+
+        pos.into_iter()
+           .filter(|(pc, _sq)| ((pc & 0b0111 != 0) && (pc & 0b1000 == 0) && (pc & 0b111 != 0b101)))
+           .for_each(|(pc, _sq)| c[pc as usize] += 1);
+
+        std::cmp::min(c[1] + c[2], 1) + std::cmp::min(c[3], 1) * 2 + std::cmp::min(c[4], 1) * 4
+    }
+}
