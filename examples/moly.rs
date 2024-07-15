@@ -25,7 +25,7 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "moly_20240603".to_string(),
+        net_id: "moly_20240715".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
