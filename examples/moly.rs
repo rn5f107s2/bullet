@@ -6,7 +6,8 @@ There's potentially a lot of elo available by adjusting the wdl
 and lr schedulers, depending on your dataset.
 */
 use bullet_lib::{
-    inputs, outputs, Activation, LocalSettings, LrScheduler, TrainerBuilder, TrainingSchedule, WdlScheduler, Loss
+    inputs, lr, optimiser, outputs, wdl, Activation, Engine, LocalSettings, Loss, OpeningBook, TestSettings,
+    TimeControl, TrainerBuilder, TrainingSchedule, UciOption,
 };
 
 const HIDDEN_SIZE: usize = 256;
@@ -15,8 +16,10 @@ const QA: i32 = 255;
 const QB: i32 = 64;
 
 fn main() {
+    #[rustfmt::skip]
     let mut trainer = TrainerBuilder::default()
         .quantisations(&[QA, QB])
+        .optimiser(optimiser::AdamW)
         .input(inputs::Chess768)
         .output_buckets(outputs::Single)
         .feature_transformer(HIDDEN_SIZE)
@@ -25,21 +28,28 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "moly_20240715".to_string(),
+        net_id: "moarData".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
         batches_per_superbatch: 23137,
         start_superbatch: 1,
         end_superbatch: 40,
-        wdl_scheduler: WdlScheduler::Constant { value: 0.5 },
-        lr_scheduler: LrScheduler::Step { start: 0.001, gamma: 0.1, step: 15 },
+        wdl_scheduler: wdl::ConstantWDL { value: 0.5 },
+        lr_scheduler: lr::StepLR { start: 0.001, gamma: 0.1, step: 15 },
         loss_function: Loss::SigmoidMSE,
         save_rate: 5,
+        optimiser_settings: optimiser::AdamWParams {
+            decay: 0.01,
+            beta1: 0.9,
+            beta2: 0.999,
+            min_weight: -1.98,
+            max_weight: 1.98,
+        },
     };
 
     let settings =
-        LocalSettings { threads: 4, data_file_paths: vec!["data/MolyCurrentShuffled.bullet"], output_directory: "checkpoints" };
+        LocalSettings { threads: 4, data_file_paths: vec!["data/MolyBig.bullet"], test_set: None, output_directory: "checkpoints" };
 
     trainer.run(&schedule, &settings);
 
