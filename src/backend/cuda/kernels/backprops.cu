@@ -12,6 +12,7 @@ __device__ float primeReLU(float in) { return in > 0.0F ? 1.0F : 0.0F; }
 __device__ float primeCReLU(float in) { return in > 0.0F && in < 1.0F ? 1.0F : 0.0F; }
 __device__ float primeSCReLU(float in) { return in > 0.0F && in < 1.0F ? 2.0F * in : 0.0F; }
 __device__ float primeSqrReLU(float in) { return in > 0.0F ? 2.0F * in : 0.0F; }
+__device__ float primeLeakySReLU(float in) { return in > 0.0F ? 2.0F * in : 0.1F; }
 
 typedef float(*OpType)(float);
 
@@ -51,4 +52,10 @@ extern "C" void backpropSqrReLU(const size_t size, const float* in, float* out)
 {
     const size_t numBlocks = (size + threadsPerBlock - 1) / threadsPerBlock;
     bufferBackprop<primeSqrReLU><<<numBlocks, threadsPerBlock>>>(size, in, out);
+}
+
+extern "C" void backpropLeakySReLU(const size_t size, const float* in, float* out)
+{
+    const size_t numBlocks = (size + threadsPerBlock - 1) / threadsPerBlock;
+    bufferBackprop<primeLeakySReLU><<<numBlocks, threadsPerBlock>>>(size, in, out);
 }

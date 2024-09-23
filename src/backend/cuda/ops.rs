@@ -150,6 +150,10 @@ pub unsafe fn activate_sqrrelu(_: &DeviceHandles, size: usize, inp: *const f32, 
     bindings::activateSqrReLU(size, inp, out);
 }
 
+pub unsafe fn activate_leakysrelu(_: &DeviceHandles, size: usize, inp: *const f32, out: *mut f32) {
+    bindings::activateLeakySReLU(size, inp, out);
+}
+
 pub unsafe fn backprop_relu(_: &DeviceHandles, size: usize, inp: *const f32, out: *mut f32) {
     bindings::backpropReLU(size, inp, out);
 }
@@ -164,6 +168,10 @@ pub unsafe fn backprop_screlu(_: &DeviceHandles, size: usize, inp: *const f32, o
 
 pub unsafe fn backprop_sqrrelu(_: &DeviceHandles, size: usize, inp: *const f32, out: *mut f32) {
     bindings::backpropSqrReLU(size, inp, out);
+}
+
+pub unsafe fn backprop_leakysrelu(_: &DeviceHandles, size: usize, inp: *const f32, out: *mut f32) {
+    bindings::backpropLeakySReLU(size, inp, out);
 }
 
 pub unsafe fn sigmoid_mpe(

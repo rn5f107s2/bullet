@@ -31,6 +31,7 @@ pub enum Activation {
     CReLU,
     SCReLU,
     SqrReLU,
+    LeakySReLU,
 }
 
 #[derive(Clone, Copy)]
@@ -182,7 +183,7 @@ impl<T: InputType, U: OutputBuckets<T::RequiredDataType>, O: Optimiser> Trainer<
         let base_path = base_path_string.as_str();
         let dev_path = dev_path_string.as_str();
 
-        let base_exe_path = format!("{base_path_string}/base_engine.exe");
+        let base_exe_path = format!("{base_path_string}/base_engine");
 
         clone(base_engine, base_path);
 
@@ -366,7 +367,7 @@ fn bench(engine: &Engine, path: &str, check_match: bool) {
 
             let mut prev = "what";
             for word in split {
-                if word == "nodes" {
+                if word == "Nodes" {
                     found = true;
                     assert_eq!(bench, prev.parse().expect("Could not parse bench output!"), "Bench did not match!");
 

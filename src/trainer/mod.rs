@@ -180,7 +180,8 @@ impl<T: InputType, U: OutputBuckets<T::RequiredDataType>, O: Optimiser> Trainer<
     }
 
     pub fn randomise_weights(&self, init_biases: bool, use_gaussian: bool) {
-        use rand::{rngs::ThreadRng, thread_rng};
+        use rand::{SeedableRng};
+        use rand::rngs::StdRng;
         use rand_distr::{Normal, Uniform};
 
         enum Dist {
@@ -197,7 +198,7 @@ impl<T: InputType, U: OutputBuckets<T::RequiredDataType>, O: Optimiser> Trainer<
                 }
             }
 
-            fn sample(&self, rng: &mut ThreadRng) -> f32 {
+            fn sample(&self, rng: &mut StdRng) -> f32 {
                 match self {
                     Dist::Normal(x) => x.sample(rng),
                     Dist::Uniform(x) => x.sample(rng),
@@ -207,7 +208,7 @@ impl<T: InputType, U: OutputBuckets<T::RequiredDataType>, O: Optimiser> Trainer<
 
         let mut network = vec![0.0; self.net_size()];
 
-        let mut rng = thread_rng();
+        let mut rng = StdRng::seed_from_u64(1 as u64);
 
         let ft_wsize = self.ft.weights.num_elements();
         let ft_bsize = self.ft.biases.num_elements();

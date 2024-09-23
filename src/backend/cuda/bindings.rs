@@ -79,6 +79,8 @@ extern "C" {
 
     pub fn activateSqrReLU(size: usize, inp: *const f32, out: *mut f32);
 
+    pub fn activateLeakySReLU(size: usize, inp: *const f32, out: *mut f32);
+
     pub fn backpropReLU(size: usize, inp: *const f32, out: *mut f32);
 
     pub fn backpropCReLU(size: usize, inp: *const f32, out: *mut f32);
@@ -86,6 +88,8 @@ extern "C" {
     pub fn backpropSCReLU(size: usize, inp: *const f32, out: *mut f32);
 
     pub fn backpropSqrReLU(size: usize, inp: *const f32, out: *mut f32);
+
+    pub fn backpropLeakySReLU(size: usize, inp: *const f32, out: *mut f32);
 
     pub fn sigmoidMPE(bufferSize: usize, outputs: *mut f32, results: *const f32, error: *mut f32, power: f32);
 
