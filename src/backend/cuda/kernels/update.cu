@@ -23,6 +23,20 @@ __global__ void updateWeight(
     if (i >= networkSize)
         return;
 
+    const int bc = 8;
+    const int bs = 32;
+    const int flw = 768 * 256 + 256;
+    const int slw = flw + 256 * bc * 2 + bc;
+    const int lwi = i - flw;
+
+    //if (   i >= flw  
+    //    && i < slw
+    //    && ((((lwi / bc) / bs) % bc) != lwi % bc))
+    //{
+    //    network[i] = 0.0F;
+    //    return;
+    //}
+
     const float grad = adj * gradients[i];
 
     float param = network[i];

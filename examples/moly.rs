@@ -17,18 +17,21 @@ const QB: i32 = 64;
 fn main() {
     #[rustfmt::skip]
     let mut trainer = TrainerBuilder::default()
+        .quantisations(&[QA, QB])
         .optimiser(optimiser::AdamW)
         .input(inputs::Chess768)
         .output_buckets(outputs::Single)
         .feature_transformer(HIDDEN_SIZE)
         .activate(Activation::SCReLU)
-        .add_layer(2)
-        .activate(Activation::SCReLU)
+        //.add_layer(8)
+        //.activate(Activation::SCReLU)
+        //.add_layer(16)
+        //.activate(Activation::SCReLU)
         .add_layer(1)
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "test".to_string(),
+        net_id: "AkimboBaseline".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
@@ -49,7 +52,7 @@ fn main() {
     };
 
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 512 };
-    let data_loader = loader::DirectSequentialDataLoader::new(&["data/MolyBig.bullet"]);
+    let data_loader = loader::DirectSequentialDataLoader::new(&["data/akimboData.bin"]);
 
     trainer.run(&schedule, &settings, &data_loader);
 
