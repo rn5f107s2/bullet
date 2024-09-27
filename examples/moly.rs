@@ -9,29 +9,28 @@ use bullet_lib::{
     inputs, loader, lr, optimiser, outputs, wdl, Activation, LocalSettings, Loss, TrainerBuilder, TrainingSchedule,
 };
 
-const HIDDEN_SIZE: usize = 256;
-const SCALE: i32 = 133;
+const HIDDEN_SIZE: usize = 512;
+const SCALE: i32 = 400;
 const QA: i32 = 255;
 const QB: i32 = 64;
 
 fn main() {
     #[rustfmt::skip]
     let mut trainer = TrainerBuilder::default()
-        .quantisations(&[QA, QB])
         .optimiser(optimiser::AdamW)
         .input(inputs::Chess768)
         .output_buckets(outputs::Single)
         .feature_transformer(HIDDEN_SIZE)
         .activate(Activation::SCReLU)
-        //.add_layer(8)
-        //.activate(Activation::SCReLU)
+        .add_layer(8)
+        .activate(Activation::LeakySReLU)
         //.add_layer(16)
         //.activate(Activation::SCReLU)
         .add_layer(1)
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "AkimboBaseline".to_string(),
+        net_id: "AkimboWeirdNotMoarLayers".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,

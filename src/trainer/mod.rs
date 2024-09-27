@@ -208,7 +208,7 @@ impl<T: InputType, U: OutputBuckets<T::RequiredDataType>, O: Optimiser> Trainer<
 
         let mut network = vec![0.0; self.net_size()];
 
-        let mut rng = StdRng::seed_from_u64(1 as u64);
+        let mut rng = StdRng::seed_from_u64(2 as u64);
 
         let ft_wsize = self.ft.weights.num_elements();
         let ft_bsize = self.ft.biases.num_elements();
