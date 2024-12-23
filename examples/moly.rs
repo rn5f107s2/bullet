@@ -6,7 +6,7 @@ There's potentially a lot of elo available by adjusting the wdl
 and lr schedulers, depending on your dataset.
 */
 use bullet_lib::{
-    inputs, lr, optimiser, outputs, wdl, Activation, Engine, LocalSettings, Loss, OpeningBook, TestSettings,
+    inputs, lr, loader, optimiser, outputs, wdl, Activation, Engine, LocalSettings, Loss, OpeningBook, TestSettings,
     TimeControl, TrainerBuilder, TrainingSchedule, UciOption,
 };
 
@@ -28,17 +28,17 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "moarData".to_string(),
+        net_id: "newData".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
-        batches_per_superbatch: 23137,
+        batches_per_superbatch: 6104,
         start_superbatch: 1,
-        end_superbatch: 40,
+        end_superbatch: 200,
         wdl_scheduler: wdl::ConstantWDL { value: 0.5 },
-        lr_scheduler: lr::StepLR { start: 0.001, gamma: 0.1, step: 15 },
+        lr_scheduler: lr::StepLR { start: 0.001, gamma: 0.3, step: 57 },
         loss_function: Loss::SigmoidMSE,
-        save_rate: 5,
+        save_rate: 20,
         optimiser_settings: optimiser::AdamWParams {
             decay: 0.01,
             beta1: 0.9,
@@ -48,10 +48,10 @@ fn main() {
         },
     };
 
-    let settings =
-        LocalSettings { threads: 4, data_file_paths: vec!["data/MolyBig.bullet"], test_set: None, output_directory: "checkpoints" };
+    let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 512 };
+    let data_loader = loader::DirectSequentialDataLoader::new(&["data/oracle1shuff.bullet"]);
 
-    trainer.run(&schedule, &settings);
+    trainer.run(&schedule, &settings, &data_loader);
 
     for fen in [
         "8/8/4kpp1/3p1b2/p6P/2B5/6P1/6K1 b - - 2 47", //https://www.chessgames.com/perl/chessgame?gid=1143956, Bh3!
