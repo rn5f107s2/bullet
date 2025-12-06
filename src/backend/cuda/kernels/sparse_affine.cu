@@ -98,6 +98,11 @@ __global__ void sparseAffineForwardKernel(
     const Feat* thisInput = inputs + inputSize * blockIdx.y;
     float* thisOutput = outputs + 2 * outputSize * blockIdx.y + elem;
 
+    const int N = 6;
+    const int sq = elem / N;
+    bool foundOur = false;
+    bool foundOpp = false;
+
     float ourElementVal = biases[elem];
     float oppElementVal = ourElementVal;
 
@@ -107,14 +112,27 @@ __global__ void sparseAffineForwardKernel(
         if (inp.our == -1)
             break;
 
+        if (inp.our % 64 == sq)
+            foundOur = true;
+
+        if (inp.opp % 64 == sq)
+            foundOpp = true;
+
         const size_t ourIdx = static_cast<size_t>(inp.our) * outputSize + elem;
         const size_t oppIdx = static_cast<size_t>(inp.opp) * outputSize + elem;
         ourElementVal += weights[ourIdx];
         oppElementVal += weights[oppIdx];
     }
 
-    thisOutput[         0] = ourElementVal;
-    thisOutput[outputSize] = oppElementVal;
+    // if (foundOur)
+    //     if (foundOpp) printf("Element: %d our: 1 opp: 1\n", elem);
+    //     else printf("Element: %d our: 1 opp: 0\n", elem);
+    // else
+    //     if (foundOpp) printf("Element: %d our: 0 opp: 1\n", elem);
+    //     else printf("Element: %d our: 0 opp: 0\n", elem);
+
+    thisOutput[         0] = foundOur ? ourElementVal : 0;
+    thisOutput[outputSize] = foundOpp ? oppElementVal : 0;
 }
 
 __global__ void sparseAffineBackwardKernel(

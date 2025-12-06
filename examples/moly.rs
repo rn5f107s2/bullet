@@ -28,14 +28,14 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "newData".to_string(),
+        net_id: "AkinmboDataTestNetSquareBucket256".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
         batches_per_superbatch: 6104,
         start_superbatch: 1,
-        end_superbatch: 200,
-        wdl_scheduler: wdl::ConstantWDL { value: 0.5 },
+        end_superbatch: 120,
+        wdl_scheduler: wdl::ConstantWDL { value: 0.75 },
         lr_scheduler: lr::StepLR { start: 0.001, gamma: 0.3, step: 57 },
         loss_function: Loss::SigmoidMSE,
         save_rate: 20,
@@ -49,7 +49,7 @@ fn main() {
     };
 
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 512 };
-    let data_loader = loader::DirectSequentialDataLoader::new(&["data/oracle1shuff.bullet"]);
+    let data_loader = loader::DirectSequentialDataLoader::new(&["data/2-akimbo-SHA-FE087EF.bin"]);
 
     trainer.run(&schedule, &settings, &data_loader);
 
