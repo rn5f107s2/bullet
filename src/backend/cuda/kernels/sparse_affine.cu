@@ -98,7 +98,7 @@ __global__ void sparseAffineForwardKernel(
     const Feat* thisInput = inputs + inputSize * blockIdx.y;
     float* thisOutput = outputs + 2 * outputSize * blockIdx.y + elem;
 
-    const int N = 6;
+    const int N = 4;
     const int sq = elem / N;
     bool foundOur = false;
     bool foundOpp = false;
@@ -112,10 +112,10 @@ __global__ void sparseAffineForwardKernel(
         if (inp.our == -1)
             break;
 
-        if (inp.our % 64 == sq)
+        if (inp.our == sq)
             foundOur = true;
 
-        if (inp.opp % 64 == sq)
+        if (inp.opp == sq)
             foundOpp = true;
 
         const size_t ourIdx = static_cast<size_t>(inp.our) * outputSize + elem;

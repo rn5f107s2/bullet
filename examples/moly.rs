@@ -10,7 +10,7 @@ use bullet_lib::{
     TimeControl, TrainerBuilder, TrainingSchedule, UciOption,
 };
 
-const HIDDEN_SIZE: usize = 256;
+const HIDDEN_SIZE: usize = 3072;
 const SCALE: i32 = 133;
 const QA: i32 = 255;
 const QB: i32 = 64;
@@ -18,7 +18,6 @@ const QB: i32 = 64;
 fn main() {
     #[rustfmt::skip]
     let mut trainer = TrainerBuilder::default()
-        .quantisations(&[QA, QB])
         .optimiser(optimiser::AdamW)
         .input(inputs::Chess768)
         .output_buckets(outputs::Single)
@@ -28,7 +27,7 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "AkinmboDataTestNetSquareBucket256".to_string(),
+        net_id: "AkinmboDataTestNetSquareBucket256WeirdArchFuseDeepFat".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
