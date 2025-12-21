@@ -11,13 +11,14 @@ use bullet_lib::{
 };
 
 const HIDDEN_SIZE: usize = 3072;
-const SCALE: i32 = 133;
+const SCALE: i32 = 400;
 const QA: i32 = 255;
 const QB: i32 = 64;
 
 fn main() {
     #[rustfmt::skip]
     let mut trainer = TrainerBuilder::default()
+        .quantisations(&[QA, QB])
         .optimiser(optimiser::AdamW)
         .input(inputs::Chess768)
         .output_buckets(outputs::Single)
@@ -27,7 +28,7 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "AkinmboDataTestNetSquareBucket256WeirdArchFuseDeepFat".to_string(),
+        net_id: "AkinmboDataTestNetSquareBucket256WeirdArchFuseDeepFatFast".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
@@ -37,7 +38,7 @@ fn main() {
         wdl_scheduler: wdl::ConstantWDL { value: 0.75 },
         lr_scheduler: lr::StepLR { start: 0.001, gamma: 0.3, step: 57 },
         loss_function: Loss::SigmoidMSE,
-        save_rate: 20,
+        save_rate: 5,
         optimiser_settings: optimiser::AdamWParams {
             decay: 0.01,
             beta1: 0.9,
@@ -50,6 +51,7 @@ fn main() {
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 512 };
     let data_loader = loader::DirectSequentialDataLoader::new(&["data/2-akimbo-SHA-FE087EF.bin"]);
 
+    //trainer.load_from_checkpoint("checkpoints/AkinmboDataTestNetSquareBucket256PieceBucketsWPieceOB-20");
     trainer.run(&schedule, &settings, &data_loader);
 
     for fen in [
