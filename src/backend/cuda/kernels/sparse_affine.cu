@@ -105,18 +105,21 @@ __global__ void sparseAffineForwardKernel(
     const size_t inputIdx = inputSize * blockIdx.y;
     const Feat* thisInput = inputs + inputSize * blockIdx.y;
 
-    float ourElementVal = biases[elem];
-    float oppElementVal = ourElementVal;
-
     const Feat feat = thisInput[index];
 
-    const int featSqOur = feat.our % 64;
-    const int featSqOpp = feat.opp % 64;
+    const int featSqOur = feat.our & (64 - 1);
+    const int featSqOpp = feat.opp & (64 - 1);
     const int featPcOur = feat.our / 64;
     const int featPcOpp = feat.opp / 64;
 
-    float* ourOutput = outputs + 2 * outputSize * blockIdx.y + featPcOur * 256 + featSqOur * 4 + elem % 4;
-    float* oppOutput = outputs + 2 * outputSize * blockIdx.y + featPcOpp * 256 + featSqOpp * 4 + elem % 4 + outputSize;
+    const int ourIndex = featPcOur * 256 + featSqOur * 4 + (elem & 3);
+    const int oppIndex = featPcOpp * 256 + featSqOpp * 4 + (elem & 3);
+
+    float ourElementVal = 0;
+    float oppElementVal = 0;
+
+    float* ourOutput = outputs + 2 * outputSize * blockIdx.y + ourIndex;
+    float* oppOutput = outputs + 2 * outputSize * blockIdx.y + oppIndex;
 
     if (feat.our == -1) {
         *ourOutput = *oppOutput = 0;
@@ -131,8 +134,8 @@ __global__ void sparseAffineForwardKernel(
 
         // idx * L1_SIZE * 12 + bucketSq * 4 + L1_SIZE * bucketPc;
 
-        const size_t ourIdx = static_cast<size_t>(inp.our) * 256 * 12 + featSqOur * 4 + 256 * featPcOur + elem % 4;
-        const size_t oppIdx = static_cast<size_t>(inp.opp) * 256 * 12 + featSqOpp * 4 + 256 * featPcOpp + elem % 4;
+        const size_t ourIdx = static_cast<size_t>(inp.our) * 256 * 12 + ourIndex;
+        const size_t oppIdx = static_cast<size_t>(inp.opp) * 256 * 12 + oppIndex;
 
         ourElementVal += weights[ourIdx];
         oppElementVal += weights[oppIdx];
@@ -161,14 +164,26 @@ __global__ void sparseAffineBackwardKernel(
 {
     const size_t elem = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (elem >= outputSize)
+    if (elem >= inputSize * 4)
         return;
 
     const Feat* thisInput = inputs + inputSize * blockIdx.y;
     const float* thisErrors = errors + 2 * outputSize * blockIdx.y;
 
-    float ourError = thisErrors[elem];
-    float oppError = thisErrors[elem + outputSize];
+    int index = elem / 4;
+
+    const Feat feat = thisInput[index];
+
+    const int featSqOur = feat.our & (64 - 1);
+    const int featSqOpp = feat.opp & (64 - 1);
+    const int featPcOur = feat.our / 64;
+    const int featPcOpp = feat.opp / 64;
+
+    const int ourIndex = featPcOur * 256 + featSqOur * 4 + (elem & 3);
+    const int oppIndex = featPcOpp * 256 + featSqOpp * 4 + (elem & 3);
+
+    float ourError = *(thisErrors + ourIndex);
+    float oppError = *(thisErrors + oppIndex + outputSize);
 
     // Idea from Jay (Beserk author).
     if (ftRegularisation != 0.0F)
@@ -178,16 +193,14 @@ __global__ void sparseAffineBackwardKernel(
             oppError += ftRegularisation * (thisOutput[elem + outputSize] > 0.0F);
     }
 
-    atomicAdd(&biasesGrad[elem], ourError + oppError);
-
     for (size_t i = 0; i < inputSize; i++) {
         const Feat inp = thisInput[i];
 
         if (inp.our == -1)
             break;
 
-        const size_t ourIdx = static_cast<size_t>(inp.our) * outputSize + elem;
-        const size_t oppIdx = static_cast<size_t>(inp.opp) * outputSize + elem;
+        const size_t ourIdx = static_cast<size_t>(inp.our) * 256 * 12 + ourIndex;
+        const size_t oppIdx = static_cast<size_t>(inp.opp) * 256 * 12 + oppIndex;
         atomicAdd(&weightsGrad[ourIdx], ourError);
         atomicAdd(&weightsGrad[oppIdx], oppError);
     }
