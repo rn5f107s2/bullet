@@ -28,7 +28,7 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "MolyDataPSQBuckets".to_string(),
+        net_id: "MolyDataPSQBucketsFixed".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
@@ -51,7 +51,7 @@ fn main() {
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 512 };
     let data_loader = loader::DirectSequentialDataLoader::new(&["data/allshuff.bullet"]);
 
-    //trainer.load_from_checkpoint("checkpoints/AkinmboDataTestNetSquareBucket256PieceBucketsWPieceOB-20");
+    //trainer.load_from_checkpoint("checkpoints/MolyDataPSQBuckets-200");
     trainer.run(&schedule, &settings, &data_loader);
 
     for fen in [

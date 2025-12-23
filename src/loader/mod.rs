@@ -87,8 +87,8 @@ where
                                 j += 1;
                             }
 
-                            if j < max_features {
-                                input_chunk[offset + j] = Feat::new(-1, -1);
+                            for k in j..max_features {
+                                input_chunk[offset + k] = Feat::new(-1, -1);
                             }
 
                             results_chunk[i] = pos.blended_result(blend, rscale);
