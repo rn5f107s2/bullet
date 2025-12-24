@@ -97,10 +97,10 @@ __global__ void sparseAffineForwardKernel(
     *(outputs + 2 * outputSize * blockIdx.y + elem             ) = 0;
     *(outputs + 2 * outputSize * blockIdx.y + elem + outputSize) = 0;
 
-    if (elem >= inputSize * 4)
+    if (elem >= inputSize * 8)
         return;
 
-    int index = elem / 4;
+    int index = elem / 8;
 
     const size_t inputIdx = inputSize * blockIdx.y;
     const Feat* thisInput = inputs + inputSize * blockIdx.y;
@@ -112,8 +112,8 @@ __global__ void sparseAffineForwardKernel(
     const int featPcOur = feat.our / 64;
     const int featPcOpp = feat.opp / 64;
 
-    const int ourIndex = featPcOur * 256 + featSqOur * 4 + elem % 4;
-    const int oppIndex = featPcOpp * 256 + featSqOpp * 4 + elem % 4;
+    const int ourIndex = featPcOur * 256 + featSqOur * 8 + elem % 8;
+    const int oppIndex = featPcOpp * 256 + featSqOpp * 8 + elem % 8;
 
     float ourElementVal = 0;
     float oppElementVal = 0;
@@ -164,13 +164,13 @@ __global__ void sparseAffineBackwardKernel(
 {
     const size_t elem = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (elem >= inputSize * 4)
+    if (elem >= inputSize * 8)
         return;
 
     const Feat* thisInput = inputs + inputSize * blockIdx.y;
     const float* thisErrors = errors + 2 * outputSize * blockIdx.y;
 
-    int index = elem / 4;
+    int index = elem / 8;
 
     const Feat feat = thisInput[index];
 
@@ -179,8 +179,8 @@ __global__ void sparseAffineBackwardKernel(
     const int featPcOur = feat.our / 64;
     const int featPcOpp = feat.opp / 64;
 
-    const int ourIndex = featPcOur * 256 + featSqOur * 4 + elem % 4;
-    const int oppIndex = featPcOpp * 256 + featSqOpp * 4 + elem % 4;
+    const int ourIndex = featPcOur * 256 + featSqOur * 8 + elem % 8;
+    const int oppIndex = featPcOpp * 256 + featSqOpp * 8 + elem % 8;
 
     float ourError = *(thisErrors + ourIndex);
     float oppError = *(thisErrors + oppIndex + outputSize);
@@ -242,11 +242,11 @@ extern "C" void singleSparseAffineBackward(
     const float* output,
     const float ftRegularisation)
 {
-    const size_t numChunks = (maxInputSize * 4 + static_cast<size_t>(1023)) / static_cast<size_t>(1024);
+    const size_t numChunks = (maxInputSize * 8 + static_cast<size_t>(1023)) / static_cast<size_t>(1024);
 
     dim3 grid(numChunks, batchSize);
 
-    const size_t threads = (numChunks == 1) ? maxInputSize * 4 : 1024;
+    const size_t threads = (numChunks == 1) ? maxInputSize * 8 : 1024;
 
     SingleSparseAffineBackwardKernel<<<grid, threads>>>(
         maxInputSize,

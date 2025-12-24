@@ -10,7 +10,7 @@ use bullet_lib::{
     TimeControl, TrainerBuilder, TrainingSchedule, UciOption,
 };
 
-const HIDDEN_SIZE: usize = 3072;
+const HIDDEN_SIZE: usize = 3072 * 2;
 const SCALE: i32 = 133;
 const QA: i32 = 255;
 const QB: i32 = 64;
@@ -28,7 +28,7 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "MolyDataPSQBucketsFixed".to_string(),
+        net_id: "Chonker".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
