@@ -10,7 +10,7 @@ use bullet_lib::{
     TimeControl, TrainerBuilder, TrainingSchedule, UciOption,
 };
 
-const HIDDEN_SIZE: usize = 3072 * 2;
+const HIDDEN_SIZE: usize = 3072;
 const SCALE: i32 = 133;
 const QA: i32 = 255;
 const QB: i32 = 64;
