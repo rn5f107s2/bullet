@@ -28,15 +28,15 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "ChonkerFixed".to_string(),
+        net_id: "LongerTraining".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
         batches_per_superbatch: 6104,
         start_superbatch: 1,
-        end_superbatch: 200,
+        end_superbatch: 200 * 2,
         wdl_scheduler: wdl::ConstantWDL { value: 0.5 },
-        lr_scheduler: lr::StepLR { start: 0.001, gamma: 0.3, step: 57 },
+        lr_scheduler: lr::StepLR { start: 0.001, gamma: 0.3, step: 57 * 2 },
         loss_function: Loss::SigmoidMSE,
         save_rate: 5,
         optimiser_settings: optimiser::AdamWParams {
