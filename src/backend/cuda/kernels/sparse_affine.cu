@@ -8,7 +8,7 @@ struct Feat {
     int32_t opp;
 };
 
-constexpr int N  = 4;
+constexpr int N  = 16;
 constexpr int HL = 64 * N; 
 
 __global__ void SingleSparseAffineForwardKernel(
