@@ -10,7 +10,7 @@ use bullet_lib::{
     TimeControl, TrainerBuilder, TrainingSchedule, UciOption,
 };
 
-const HIDDEN_SIZE: usize = 3072;
+const HIDDEN_SIZE: usize = 8 * 64 * 12;
 const SCALE: i32 = 133;
 const QA: i32 = 255;
 const QB: i32 = 64;
@@ -38,7 +38,7 @@ fn main() {
         wdl_scheduler: wdl::ConstantWDL { value: 0.5 },
         lr_scheduler: lr::StepLR { start: 0.001, gamma: 0.3, step: 57 },
         loss_function: Loss::SigmoidMSE,
-        save_rate: 5,
+        save_rate: 20,
         optimiser_settings: optimiser::AdamWParams {
             decay: 0.01,
             beta1: 0.9,
