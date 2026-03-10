@@ -49,7 +49,7 @@ fn main() {
     };
 
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 512 };
-    let data_loader = loader::DirectSequentialDataLoader::new(&["data/moly_oraclegcp.bullet"]);
+    let data_loader = loader::DirectSequentialDataLoader::new(&["data/moly_oraclegcp_5ks_12khtempmix.bullet"]);
 
     //trainer.load_from_checkpoint("checkpoints/MolyDataPSQBuckets-200");
     trainer.run(&schedule, &settings, &data_loader);
