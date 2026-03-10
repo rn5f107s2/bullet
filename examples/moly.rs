@@ -28,7 +28,7 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "NewData".to_string(),
+        net_id: "CosineDecay".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
@@ -36,7 +36,7 @@ fn main() {
         start_superbatch: 1,
         end_superbatch: 200,
         wdl_scheduler: wdl::ConstantWDL { value: 0.5 },
-        lr_scheduler: lr::StepLR { start: 0.001, gamma: 0.3, step: 57 },
+        lr_scheduler: lr::CosineDecayLR { initial_lr: 0.001, final_lr: 0.001 * 0.3 * 0.3 * 0.3, final_superbatch: 200 },
         loss_function: Loss::SigmoidMSE,
         save_rate: 20,
         optimiser_settings: optimiser::AdamWParams {
