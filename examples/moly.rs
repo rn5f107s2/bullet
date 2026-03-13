@@ -29,7 +29,7 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "Bigger2".to_string(),
+        net_id: "CDOneMoreDrop".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
@@ -39,7 +39,7 @@ fn main() {
         wdl_scheduler: wdl::ConstantWDL { value: 0.5 },
         lr_scheduler: lr::CosineDecayLR { initial_lr: 0.001, final_lr: 0.001 * 0.3.powi(4), final_superbatch: 200 },
         loss_function: Loss::SigmoidMSE,
-        save_rate: 20,
+        save_rate: 40,
         optimiser_settings: optimiser::AdamWParams {
             decay: 0.01,
             beta1: 0.9,
