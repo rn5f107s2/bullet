@@ -29,7 +29,7 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "CDOneMoreDrop".to_string(),
+        net_id: "CDTwoMoreDropsLonger".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
@@ -37,7 +37,7 @@ fn main() {
         start_superbatch: 1,
         end_superbatch: 200,
         wdl_scheduler: wdl::ConstantWDL { value: 0.5 },
-        lr_scheduler: lr::CosineDecayLR { initial_lr: 0.001, final_lr: 0.001 * 0.3.powi(4), final_superbatch: 200 },
+        lr_scheduler: lr::CosineDecayLR { initial_lr: 0.001, final_lr: 0.001 * 0.3.powi(5), final_superbatch: 300 },
         loss_function: Loss::SigmoidMSE,
         save_rate: 40,
         optimiser_settings: optimiser::AdamWParams {
