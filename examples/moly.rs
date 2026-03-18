@@ -24,7 +24,8 @@ fn main() {
         .input(inputs::Chess768)
         .output_buckets(outputs::Single)
         .feature_transformer(HIDDEN_SIZE)
-        .activate(Activation::SCReLU)
+        .activate(Activation::CReLU)
+        .add_pairwise_mul()
         .add_layer(1)
         .build();
 
@@ -35,7 +36,7 @@ fn main() {
         batch_size: 16384,
         batches_per_superbatch: 6104,
         start_superbatch: 1,
-        end_superbatch: 200,
+        end_superbatch: 6104,
         wdl_scheduler: wdl::ConstantWDL { value: 0.5 },
         lr_scheduler: lr::CosineDecayLR { initial_lr: 0.001, final_lr: 0.001 * 0.3.powi(5), final_superbatch: 300 },
         loss_function: Loss::SigmoidMSE,
@@ -50,9 +51,9 @@ fn main() {
     };
 
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 512 };
-    let data_loader = loader::DirectSequentialDataLoader::new(&["data/moly_oraclegcp_5ks_12khtempmix.bullet"]);
+    let data_loader = loader::DirectSequentialDataLoader::new(&["data/Moly25kOld.bullet"]);
 
-    //trainer.load_from_checkpoint("checkpoints/MolyDataPSQBuckets-200");
+    //trainer.load_from_checkpoint("checkpoints/NewData-200");
     trainer.run(&schedule, &settings, &data_loader);
 
     for fen in [

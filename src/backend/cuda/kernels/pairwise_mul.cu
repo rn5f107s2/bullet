@@ -6,6 +6,7 @@ output_vector = input_vector[:N] * input_vector[N:]
 */
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <stdio.h>
 
 constexpr int N = 8;
 
@@ -24,8 +25,7 @@ __global__ void pairwiseMulKernel(
         return;
 
     const float* thisInp = inp + 2 * tensorSize * blockIdx.y + tid;
-    // tid % N is never >= N / 2 so this should be fine
-    float* thisOut = out + tensorSize * blockIdx.y + (tid / N) + (tid % N);
+    float* thisOut = out + tensorSize * blockIdx.y + (tid / (N / 2)) * 2 + (tid % (N / 2));
 
     thisOut[0] = thisInp[0] * thisInp[N / 2];
 }
@@ -54,7 +54,7 @@ __global__ void pairwiseMulBackwardKernel(
     if (tid % N >= (N / 2))
         return;
 
-    const float* thisInp = inp + tensorSize * blockIdx.y + (tid / N) + (tid % N);
+    const float* thisInp = inp + tensorSize * blockIdx.y + (tid / (N / 2)) * 2 + (tid % (N / 2));
     float* thisOut = out + 2 * tensorSize * blockIdx.y + tid;
 
     const float gradIn = thisInp[0];
