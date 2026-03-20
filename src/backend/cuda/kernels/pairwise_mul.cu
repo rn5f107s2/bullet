@@ -8,7 +8,7 @@ output_vector = input_vector[:N] * input_vector[N:]
 #include <cuda_runtime.h>
 #include <stdio.h>
 
-constexpr int N = 8;
+constexpr int N = 16;
 
 constexpr size_t threadsPerBlock = static_cast<size_t>(1024);
 
