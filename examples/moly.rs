@@ -13,7 +13,7 @@ use rand_distr::num_traits::{Float, Pow};
 
 const HIDDEN_SIZE: usize = 16 * 64 * 12;
 const SCALE: i32 = 133;
-const QA: i32 = 255;
+const QA: i32 = 511;
 const QB: i32 = 64;
 
 fn main() {
@@ -29,7 +29,7 @@ fn main() {
         .build();
 
     let schedule = TrainingSchedule {
-        net_id: "CDTwoMoreDropsLonger".to_string(),
+        net_id: "ClipTighterQAHigher".to_string(),
         eval_scale: SCALE as f32,
         ft_regularisation: 0.0,
         batch_size: 16384,
@@ -44,8 +44,8 @@ fn main() {
             decay: 0.01,
             beta1: 0.9,
             beta2: 0.999,
-            min_weight: -1.98,
-            max_weight: 1.98,
+            min_weight: -1.00,
+            max_weight: 1.00,
         },
     };
 
