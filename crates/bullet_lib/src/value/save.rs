@@ -126,7 +126,7 @@ where
     Out: OutputBuckets<Inp::RequiredDataType>,
 {
     pub fn load_from_checkpoint(&mut self, path: &str) {
-        let err = self.optimiser.load_from_checkpoint(&format!("{path}/optimiser_state"));
+        let err = self.optimiser.load_from_old_format_checkpoint(&format!("{path}"));
         if let Err(e) = err {
             println!();
             println!("Error loading from checkpoint:");
@@ -145,5 +145,9 @@ where
 
     pub fn save_unquantised(&self, path: &str) -> io::Result<()> {
         save_unquantised(self, path)
+    }
+
+    pub fn dothis(&mut self, path: &str) {
+        self.optimiser.load_weights_from_file(path);
     }
 }

@@ -7,6 +7,9 @@ use crate::{
 
 const MAXIMUM_BLOCKS_Y: u32 = 32768;
 
+const N: u32 = 16;
+const HL: u32 = N * 64;
+
 pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
     let output_shape = desc.weights_shape * desc.input_shape;
     let indices = desc.indices;
@@ -21,7 +24,7 @@ pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
     let batched = indices.batch_size().is_some();
     let nnz = indices.sparse().nnz();
     let m = output_shape.rows();
-    let vectorise = m % 4 == 0 && m >= 128;
+    let vectorise = false;
 
     let code = kernel_str(bias, nnz, m, desc.activation, vectorise);
 
@@ -86,7 +89,7 @@ fn act_str(act: DiffableFromOutput) -> &'static str {
 fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFromOutput, vectorise: bool) -> String {
     let op = format!("__device__ float op(float x) {{ return {}; }}", act_str(activation));
 
-    let code = if vectorise { vectorised_kernel(bias) } else { fallback_kernel(bias) };
+    let code = fallback_kernel(bias);
 
     let bias_args = if bias.is_some() { ", const float* B" } else { "" };
 
@@ -111,74 +114,39 @@ fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFrom
     )
 }
 
-fn vectorised_kernel(bias: Option<bool>) -> String {
-    let offset = if bias.unwrap_or(false) { "m4 * loc" } else { "0" };
-    let sum = if bias.is_some() {
-        "reinterpret_cast<const float4*>(B)[offset + row]"
-    } else {
-        "make_float4(0.0F, 0.0F, 0.0F, 0.0F)"
-    };
-
-    format!(
-        "
-        extern __shared__ int sX[];
-
-        constexpr int m4 = m / 4;
-
-        if (row >= m4 || loc >= k) return;
-
-        if (threadIdx.x < nnz)
-        {{
-            for (int i = threadIdx.x; i < nnz; i += blockDim.x)
-            {{
-                sX[i] = X[nnz * loc + i];
-            }}
-        }}
-
-        __syncthreads();
-
-        const int offset = {offset};
-        float4 val = {sum};
-
-        for (int i = 0; i < nnz; i++) {{
-            const int j = sX[i];
-
-            if (j == -1) break;
-
-            const float4 a = reinterpret_cast<const float4*>(A)[j * m4 + row];
-
-            val.x += a.x;
-            val.y += a.y;
-            val.z += a.z;
-            val.w += a.w;
-        }}
-
-        val.x = op(val.x);
-        val.y = op(val.y);
-        val.z = op(val.z);
-        val.w = op(val.w);
-
-        reinterpret_cast<float4*>(Y)[m4 * loc + row] = val;"
-    )
-}
-
-fn fallback_kernel(bias: Option<bool>) -> String {
-    let offset = if bias.unwrap_or(false) { "m * loc" } else { "0" };
-    let sum = if bias.is_some() { "B[offset + row]" } else { "0.0F" };
-
+fn fallback_kernel(_bias: Option<bool>) -> String {
     format!(
         "
         if (row >= m || loc >= k) return;
 
-        const int offset = {offset};
-        float sum = {sum};
+        Y[m * loc + row] = 0;
+
+        if (row >= nnz * {N})
+            return;
+
+        float sum = 0.0F;
+
+        const int featIdx = row / {N};
+        const int feat    = X[nnz * loc + featIdx];
+
+        if (feat == -1)
+            return;
+
+        const int pc = feat / 64;
+        const int sq = feat % 64;
+
+        const int idx = row % {N};
+
+        const int nRow = pc * {HL} + sq * {N} + idx;
 
         for (int i = 0; i < nnz; i++) {{
             const int j = X[nnz * loc + i];
+
             if (j == -1) break;
-            sum += A[j * m + row];
+
+            sum += A[j * m + nRow];
         }}
 
-        Y[m * loc + row] = op(sum);"
+        Y[m * loc + nRow] = op(sum);"
     )
 }

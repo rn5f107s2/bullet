@@ -23,8 +23,8 @@ impl SparseInputType for Chess768 {
             let pc = 64 * usize::from(piece & 7);
             let sq = usize::from(square);
 
-            let stm = [0, 384][c] + pc + sq;
-            let ntm = [384, 0][c] + pc + (sq ^ 56);
+            let stm = [0, 384][c] + pc + (sq ^ 7);
+            let ntm = [384, 0][c] + pc + (sq ^ 63);
             f(stm, ntm)
         }
     }
