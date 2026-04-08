@@ -6,13 +6,15 @@ use bullet_lib::{
         schedule::{TrainingSchedule, TrainingSteps, lr, wdl},
         settings::LocalSettings,
     },
-    value::{ValueTrainerBuilder, loader::DirectSequentialDataLoader},
+    value::{ValueTrainerBuilder},
 };
+
+use bullet_lib::value::loader::ViriBinpackLoader;
+use viriformat::dataformat::Filter;
 
 fn main() {
     // hyperparams to fiddle with
     let hl_size = 128;
-    let dataset_path = "data/baseline.data";
     let initial_lr = 0.001;
     let final_lr = 0.001 * 0.3f32.powi(5);
     let superbatches = 40;
@@ -22,6 +24,7 @@ fn main() {
         .dual_perspective()
         .optimiser(AdamW)
         .inputs(Chess768)
+        .use_threads(4)
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
@@ -57,7 +60,29 @@ fn main() {
 
     let settings = LocalSettings { threads: 2, test_set: None, output_directory: "checkpoints", batch_queue_size: 32 };
 
-    let dataloader = DirectSequentialDataLoader::new(&[dataset_path]);
+    let dataloader = ViriBinpackLoader::new(
+        "data/test.vf",
+        1024,
+        4,
+        Filter {
+            min_ply: 8,
+            min_pieces: 0,
+            max_eval: 32000,
+            filter_tactical: true,
+            filter_check: false,
+            filter_castling: false,
+            max_eval_incorrectness: u32::MAX,
+            random_fen_skipping: false,
+            random_fen_skip_probability: 0.00,
+            wdl_filtered: false,
+            wdl_model_params_a: [0.0; 4],
+            wdl_model_params_b: [0.0; 4],
+            material_min: 1,
+            material_max: 100000,
+            mom_target: 58,
+            wdl_heuristic_scale: 1.5,
+        }
+    );
 
     trainer.run(&schedule, &settings, &dataloader);
 }
