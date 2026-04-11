@@ -177,7 +177,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
         if (elem >= k * {N})
             return;
 
-        int indexx = elem / N;
+        int indexx = elem / {N};
 
         const int feat = X[indexx];
 
