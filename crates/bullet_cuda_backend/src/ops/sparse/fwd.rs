@@ -7,6 +7,9 @@ use crate::{
 
 const MAXIMUM_BLOCKS_Y: u32 = 32768;
 
+const N  : u32 = 16;
+const HL : u32 = 64 * N; 
+
 pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
     let output_shape = desc.weights_shape * desc.input_shape;
     let indices = desc.indices;
@@ -86,7 +89,7 @@ fn act_str(act: DiffableFromOutput) -> &'static str {
 fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFromOutput, vectorise: bool) -> String {
     let op = format!("__device__ float op(float x) {{ return {}; }}", act_str(activation));
 
-    let code = if vectorise { vectorised_kernel(bias) } else { fallback_kernel(bias) };
+    let code = if false { vectorised_kernel(bias) } else { fallback_kernel(bias) };
 
     let bias_args = if bias.is_some() { ", const float* B" } else { "" };
 
@@ -162,21 +165,37 @@ fn vectorised_kernel(bias: Option<bool>) -> String {
     )
 }
 
-fn fallback_kernel(bias: Option<bool>) -> String {
-    let offset = if bias.unwrap_or(false) { "m * loc" } else { "0" };
-    let sum = if bias.is_some() { "B[offset + row]" } else { "0.0F" };
-
+fn fallback_kernel(_bias: Option<bool>) -> String {
     format!(
         "
         if (row >= m || loc >= k) return;
 
-        const int offset = {offset};
-        float sum = {sum};
+        const int elem = m * loc + row
+
+        Y[elem] = 0;
+
+        if (elem >= k * N)
+            return;
+
+        const int feat = thisInput[index];
+
+        if (feat == -1)
+            return;
+
+        const int featSq = feat % 64;
+        const int featPc = feat / 64;
+
+        const int index = featPc * HL + featSq * N + elem % N;
+
+        float sum = 0.0F;
 
         for (int i = 0; i < nnz; i++) {{
             const int j = X[nnz * loc + i];
             if (j == -1) break;
-            sum += A[j * m + row];
+
+            const size_t idx = static_cast<size_t>(j) * HL * 12 + index;
+
+            sum += A[idx];
         }}
 
         Y[m * loc + row] = op(sum);"

@@ -11,6 +11,9 @@ constexpr int MaximumBlocksY = DECL_MAXY;
 constexpr int m = DECL_M;
 constexpr int nnz = DECL_NNZ;
 
+constexpr int N  = 16;
+constexpr int HL = 64 * N; 
+
 __device__ float op([[maybe_unused]] float x) {
     return INV_DERIV;
 }
@@ -26,7 +29,9 @@ extern "C" __global__ void kernel(
     const int loc = MaximumBlocksY * blockIdx.z + blockIdx.y;
     const int row = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (row >= m || loc >= k)
+    const int elem = m * loc + row;
+
+    if (elem >= 768 * N)
         return;
 
     const int* tX = X + nnz * loc;
@@ -34,7 +39,14 @@ extern "C" __global__ void kernel(
 
     const float tE = op(Y[offset + row]) * Yg[offset + row];
 
-    BIAS_BACKPROP
+    int index = elem / N;
+
+    const int feat = X[index];
+
+    const int featSq = feat % 64;
+    const int featPc = feat / 64;
+
+    const int ourIndex = featPc * HL + featSq * N + elem % N;
 
     for (int i = 0; i < nnz; i++) {
         const int j = tX[i];
@@ -42,7 +54,9 @@ extern "C" __global__ void kernel(
         if (j == -1)
             break;
 
+        const size_t ourIdx = static_cast<size_t>(j) * HL * 12 + ourIndex;
+
         if (tE != 0.0F)
-            atomicAdd(&Ag[j * m + row], tE);
+            atomicAdd(&Ag[ourIdx], tE);
     }
 }
