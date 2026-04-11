@@ -170,12 +170,14 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
         "
         if (row >= m || loc >= k) return;
 
-        const int elem = m * loc + row
+        const int elem = m * loc + row;
 
         Y[elem] = 0;
 
         if (elem >= k * {N})
             return;
+
+        int index = elem / N;
 
         const int feat = X[index];
 
