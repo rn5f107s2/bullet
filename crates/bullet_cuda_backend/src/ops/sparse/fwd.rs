@@ -177,7 +177,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
         if (elem >= k * {N})
             return;
 
-        const int feat = thisInput[index];
+        const int feat = X[index];
 
         if (feat == -1)
             return;
