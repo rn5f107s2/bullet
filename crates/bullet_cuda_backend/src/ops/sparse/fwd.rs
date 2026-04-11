@@ -174,7 +174,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
         Y[elem] = 0;
 
-        if (elem >= k * N)
+        if (elem >= k * {N})
             return;
 
         const int feat = thisInput[index];
@@ -185,7 +185,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
         const int featSq = feat % 64;
         const int featPc = feat / 64;
 
-        const int index = featPc * HL + featSq * N + elem % N;
+        const int index = featPc * {HL} + featSq * {N} + elem % {N};
 
         float sum = 0.0F;
 
@@ -193,7 +193,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
             const int j = X[nnz * loc + i];
             if (j == -1) break;
 
-            const size_t idx = static_cast<size_t>(j) * HL * 12 + index;
+            const size_t idx = static_cast<size_t>(j) * {HL} * 12 + index;
 
             sum += A[idx];
         }}
