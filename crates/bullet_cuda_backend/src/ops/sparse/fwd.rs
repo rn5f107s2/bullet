@@ -5,6 +5,8 @@ use crate::{
     kernel::{Expr, Kernel, KernelArgs, KernelInput},
 };
 
+const MAXIMUM_BLOCKS_Y: u32 = 32768;
+
 const N: u32 = 16;
 const HL: u32 = 64 * N;
 
