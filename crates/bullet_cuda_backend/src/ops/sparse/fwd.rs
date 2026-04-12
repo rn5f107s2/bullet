@@ -128,7 +128,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
         float sum = 0.0F;
 
-        float* ourOutput = Y + {m} * blockIdx.y + ourIndex;
+        float* ourOutput = Y + m * blockIdx.y + ourIndex;
 
         for (int i = 0; i < nnz; i++) {{
             const int j = thisInput[i];
