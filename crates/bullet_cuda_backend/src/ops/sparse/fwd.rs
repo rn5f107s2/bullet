@@ -5,8 +5,6 @@ use crate::{
     kernel::{Expr, Kernel, KernelArgs, KernelInput},
 };
 
-const MAXIMUM_BLOCKS_Y: u32 = 32768;
-
 const N: u32 = 16;
 const HL: u32 = 64 * N;
 
@@ -106,16 +104,15 @@ fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFrom
 fn fallback_kernel(_bias: Option<bool>) -> String {
     format!(
         "
-        if (elem >= outputSize) return;
+        if (elem >= m) return;
 
         *(Y + 2 * m * blockIdx.y + elem) = 0;
 
         if (elem >= k * {N})
             return;
 
-        int index = elem / N;
+        int index = elem / {N};
 
-        const size_t inputIdx = k * blockIdx.y;
         const int* thisInput = X + k * blockIdx.y;
 
         const int feat = X[index];
