@@ -15,6 +15,9 @@ __device__ float op([[maybe_unused]] float x) {
     return INV_DERIV;
 }
 
+constexpr int N = 16;
+constexpr int HL = 64 * N;
+
 extern "C" __global__ void kernel(
     const int k,
     const int* X,
@@ -23,26 +26,35 @@ extern "C" __global__ void kernel(
     float* Ag
     BIAS_ARG)
 {
-    const int loc = MaximumBlocksY * blockIdx.z + blockIdx.y;
-    const int row = blockIdx.x * blockDim.x + threadIdx.x;
+    const size_t elem = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (row >= m || loc >= k)
+    if (elem >= k * N)
         return;
 
-    const int* tX = X + nnz * loc;
-    const int offset = m * loc;
+    const int* thisInput = X + k * blockIdx.y;
+    const float* thisErrors  = Yg + m * blockIdx.y;
+    const float* thisOutputs = Y + m * blockIdx.y; 
 
-    const float tE = op(Y[offset + row]) * Yg[offset + row];
+    int index = elem / N;
 
-    BIAS_BACKPROP
+    const int feat = thisInput[index];
+
+    const int featSqOur = feat % 64;
+    const int featPcOur = feat % 64;
+
+    const int ourIndex = featPcOur * HL + featSqOur * N + elem % N;
+
+    float ourError = *(thisErrors + ourIndex) * op(thisOutputs[ourIndex]);
 
     for (int i = 0; i < nnz; i++) {
-        const int j = tX[i];
+        const int j = thisInput[i];
 
         if (j == -1)
             break;
 
-        if (tE != 0.0F)
-            atomicAdd(&Ag[j * m + row], tE);
+        const size_t ourIdx = static_cast<size_t>(j) * HL * 12 + ourIndex;
+
+        if (ourError != 0.0F)
+            atomicAdd(&Ag[ourIdx], ourError);
     }
 }

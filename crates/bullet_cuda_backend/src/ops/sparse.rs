@@ -84,12 +84,9 @@ impl SparseAffineImpl for CudaDevice {
             inputs.push(KernelInput::Slice { slice: bias, layout: None, mutable: true, batched, shape: output_shape });
         }
 
-        let maxy = Expr::Const(MAXIMUM_BLOCKS_Y);
-        let threads = m.min(1024);
-        let chunks = m.div_ceil(threads);
-        let ky = batch_size.min(&maxy);
-        let kz = (batch_size + maxy.clone() - 1) / maxy;
-        let grid_dim = [Expr::Const(chunks as i32), ky, kz];
+        let chunks = m.div_ceil(1024);
+        let threads = if chunks == 1 { m } else { 1024 };
+        let grid_dim = [Expr::Const(chunks as i32), batch_size, Expr::Const(1)];
         let block_dim = [Expr::Const(threads as i32), Expr::Const(1), Expr::Const(1)];
 
         let shared_mem_bytes = Expr::Const(0);
