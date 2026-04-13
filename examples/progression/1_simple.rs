@@ -54,7 +54,7 @@ fn main() {
         },
         wdl_scheduler: wdl::ConstantWDL { value: wdl_proportion },
         lr_scheduler: lr::CosineDecayLR { initial_lr, final_lr, final_superbatch: superbatches },
-        save_rate: 10,
+        save_rate: 40,
     };
 
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 32 };
