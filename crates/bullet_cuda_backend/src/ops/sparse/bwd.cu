@@ -51,7 +51,7 @@ extern "C" __global__ void kernel(
 
     const float tE = op(Y[offset + nRow]) * Yg[offset + nRow];
 
-    if (isnan(tE)) {
+    if (isnan(Y[offset + nRow])) {
         int* f = reinterpret_cast<int*>(0xDEADBEEF);
         *f = 0;
     }
