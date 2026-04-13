@@ -7,6 +7,9 @@ use crate::{
 
 const MAXIMUM_BLOCKS_Y: u32 = 32768;
 
+const N: u32 = 16;
+const HL: u32 = N * 64;
+
 pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
     let output_shape = desc.weights_shape * desc.input_shape;
     let indices = desc.indices;
@@ -162,23 +165,39 @@ fn vectorised_kernel(bias: Option<bool>) -> String {
     )
 }
 
-fn fallback_kernel(bias: Option<bool>) -> String {
-    let offset = if bias.unwrap_or(false) { "m * loc" } else { "0" };
-    let sum = if bias.is_some() { "B[offset + row]" } else { "0.0F" };
-
+fn fallback_kernel(_bias: Option<bool>) -> String {
     format!(
         "
         if (row >= m || loc >= k) return;
 
-        const int offset = {offset};
-        float sum = {sum};
+        Y[m * loc + row] = 0;
+
+        if (row >= nnz * {N})
+            return;
+
+        float sum = 0.0F;
+
+        const int featIdx = row / nnz;
+        const int feat    = X[nnz * loc + featIdx];
+
+        if (feat == -1)
+            return;
+
+        const int pc = feat / 64;
+        const int sq = feat % 64;
+
+        const int idx = row % {N};
+
+        const int nRow = pc * {HL} + sq * {N} + idx;
 
         for (int i = 0; i < nnz; i++) {{
             const int j = X[nnz * loc + i];
+
             if (j == -1) break;
-            sum += A[j * m + row];
+
+            sum += A[j * m + nRow];
         }}
 
-        Y[m * loc + row] = op(sum);"
+        Y[m * loc + nRow] = op(sum);"
     )
 }
