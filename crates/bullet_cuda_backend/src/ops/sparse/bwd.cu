@@ -7,8 +7,6 @@
 #define BIAS_BACKPROP
 #endif
 
-#include <stdio.h>
-
 constexpr int MaximumBlocksY = DECL_MAXY;
 constexpr int m = DECL_M;
 constexpr int nnz = DECL_NNZ;
@@ -53,8 +51,10 @@ extern "C" __global__ void kernel(
 
     const float tE = op(Y[offset + nRow]) * Yg[offset + nRow];
 
-    if (isnan(tE))
-        printf("jdasndaskjdnas\n");
+    if (isnan(tE)) {
+        int* f = reinterpret_cast<int*>(0xDEADBEEF);
+        *f = 0;
+    }
 
     for (int i = 0; i < nnz; i++) {
         const int j = tX[i];
