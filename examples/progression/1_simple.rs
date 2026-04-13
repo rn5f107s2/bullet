@@ -17,14 +17,13 @@ fn main() {
     let hl_size = 12 * 64 * 16;
     let initial_lr = 0.001;
     let final_lr = 0.001 * 0.3f32.powi(5);
-    let superbatches = 5;
-    let wdl_proportion = 0.75;
+    let superbatches = 300;
+    let wdl_proportion = 0.5;
 
     let mut trainer = ValueTrainerBuilder::default()
         .dual_perspective()
         .optimiser(AdamW)
         .inputs(Chess768)
-        .use_threads(4)
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
@@ -49,7 +48,7 @@ fn main() {
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
-            batches_per_superbatch: 256,
+            batches_per_superbatch: 6104,
             start_superbatch: 1,
             end_superbatch: superbatches,
         },
@@ -58,11 +57,11 @@ fn main() {
         save_rate: 10,
     };
 
-    let settings = LocalSettings { threads: 2, test_set: None, output_directory: "checkpoints", batch_queue_size: 32 };
+    let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 32 };
 
     let dataloader = ViriBinpackLoader::new(
-        "data/unfiltered.vf",
-        1024,
+        "data/moly_oraclegcp_5ks_12khtempmix.vf",
+        4096,
         4,
         Filter {
             min_ply: 8,
