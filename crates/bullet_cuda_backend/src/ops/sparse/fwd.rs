@@ -147,6 +147,11 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
             sum += A[j * m + nRow];
         }}
 
-        Y[m * loc + nRow] = op(sum);"
+        Y[m * loc + nRow] = op(sum);
+        
+        if (isnan(op(sum)) {{
+            int* f = reinterpret_cast<int*>(0xDEADBEEF);
+            *f = 0;
+        }}"
     )
 }
