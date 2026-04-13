@@ -89,7 +89,7 @@ fn act_str(act: DiffableFromOutput) -> &'static str {
 fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFromOutput, vectorise: bool) -> String {
     let op = format!("__device__ float op(float x) {{ return {}; }}", act_str(activation));
 
-    let code = if vectorise { vectorised_kernel(bias) } else { fallback_kernel(bias) };
+    let code = fallback_kernel(bias);
 
     let bias_args = if bias.is_some() { ", const float* B" } else { "" };
 
