@@ -177,7 +177,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
         float sum = 0.0F;
 
-        const int featIdx = row / nnz;
+        const int featIdx = row / {N};
         const int feat    = X[nnz * loc + featIdx];
 
         if (feat == -1)
