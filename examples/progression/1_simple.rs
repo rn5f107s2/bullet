@@ -34,7 +34,7 @@ fn main() {
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
-            let l0 = builder.new_affine("l0", 768, hl_size);
+            let l0 = builder.new_affine("l0", 768, 2 * hl_size);
             let l1 = builder.new_affine("l1", hl_size, 1);
 
             // inference
