@@ -35,7 +35,7 @@ fn main() {
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 1);
+            let l1 = builder.new_affine("l1", hl_size, 1);
 
             // inference
             let hidden_layer = l0.forward(stm_inputs).screlu();
