@@ -51,12 +51,16 @@ extern "C" __global__ void kernel(
 
     const float tE = op(Y[offset + nRow]) * Yg[offset + nRow];
 
+    if (nRow >= m) {
+        printf("bad access");
+    }
+
     if (isnan(Y[m * loc + nRow])) {
-        printf("dead output");
+        printf("dead output\n");
     }
 
     if (isnan(Yg[offset + nRow])) {
-        printf("dead gradient");
+        printf("dead gradient\n");
     }
 
     for (int i = 0; i < nnz; i++) {
