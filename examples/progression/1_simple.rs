@@ -61,7 +61,7 @@ fn main() {
     let settings = LocalSettings { threads: 2, test_set: None, output_directory: "checkpoints", batch_queue_size: 32 };
 
     let dataloader = ViriBinpackLoader::new(
-        "data/test.vf",
+        "data/unfiltered.vf",
         1024,
         4,
         Filter {
