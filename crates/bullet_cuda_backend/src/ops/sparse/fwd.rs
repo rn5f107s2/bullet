@@ -147,10 +147,6 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
             sum += A[j * m + nRow];
         }}
 
-        Y[m * loc + nRow] = op(sum);
-        
-        if (loc == 0)  {{
-            printf(\"%d\\n\", nRow);
-        }}"
+        Y[m * loc + nRow] = op(sum);"
     )
 }
