@@ -114,57 +114,6 @@ fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFrom
     )
 }
 
-fn vectorised_kernel(bias: Option<bool>) -> String {
-    let offset = if bias.unwrap_or(false) { "m4 * loc" } else { "0" };
-    let sum = if bias.is_some() {
-        "reinterpret_cast<const float4*>(B)[offset + row]"
-    } else {
-        "make_float4(0.0F, 0.0F, 0.0F, 0.0F)"
-    };
-
-    format!(
-        "
-        extern __shared__ int sX[];
-
-        constexpr int m4 = m / 4;
-
-        if (row >= m4 || loc >= k) return;
-
-        if (threadIdx.x < nnz)
-        {{
-            for (int i = threadIdx.x; i < nnz; i += blockDim.x)
-            {{
-                sX[i] = X[nnz * loc + i];
-            }}
-        }}
-
-        __syncthreads();
-
-        const int offset = {offset};
-        float4 val = {sum};
-
-        for (int i = 0; i < nnz; i++) {{
-            const int j = sX[i];
-
-            if (j == -1) break;
-
-            const float4 a = reinterpret_cast<const float4*>(A)[j * m4 + row];
-
-            val.x += a.x;
-            val.y += a.y;
-            val.z += a.z;
-            val.w += a.w;
-        }}
-
-        val.x = op(val.x);
-        val.y = op(val.y);
-        val.z = op(val.z);
-        val.w = op(val.w);
-
-        reinterpret_cast<float4*>(Y)[m4 * loc + row] = val;"
-    )
-}
-
 fn fallback_kernel(_bias: Option<bool>) -> String {
     format!(
         "
@@ -198,11 +147,6 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
             sum += A[j * m + nRow];
         }}
 
-        Y[m * loc + nRow] = op(sum);
-        
-        if (isnan(sum)) {{
-            int* f = reinterpret_cast<int*>(0xDEADBEEF);
-            *f = 0;
-        }}"
+        Y[m * loc + nRow] = op(sum);"
     )
 }
