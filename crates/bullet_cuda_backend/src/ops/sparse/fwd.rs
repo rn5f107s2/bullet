@@ -195,7 +195,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
             if (j == -1) break;
 
-            if (isnan(A[j * m + nRow])) {{
+            if (isnan(sum)) {{
                 int* f = reinterpret_cast<int*>(0xDEADBEEF);
                 *f = 0;
             }}
