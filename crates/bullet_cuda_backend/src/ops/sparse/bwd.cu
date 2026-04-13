@@ -42,8 +42,8 @@ extern "C" __global__ void kernel(
     if (feat == -1)
         return;
 
-    const int sq = feat / 64;
-    const int pc = feat % 64;
+    const int pc = feat / 64;
+    const int sq = feat % 64;
 
     const int idx = row % N;
 
