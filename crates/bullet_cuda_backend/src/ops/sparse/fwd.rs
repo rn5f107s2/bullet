@@ -150,7 +150,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
         Y[m * loc + nRow] = op(sum);
         
         if (loc == 0)  {{
-            printf(\"%d\n\", nRow);
+            printf(\"%d\\n\", nRow);
         }}"
     )
 }
