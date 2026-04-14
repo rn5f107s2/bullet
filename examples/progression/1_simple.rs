@@ -85,7 +85,7 @@ fn main() {
 
     //trainer.run(&schedule, &settings, &dataloader);
 
-    trainer.load_from_checkpoint("cd");
+    trainer.dothis("knowngood/params.bin");
 
     for fen in [
         "8/8/4kpp1/3p1b2/p6P/2B5/6P1/6K1 b - - 2 47", //https://www.chessgames.com/perl/chessgame?gid=1143956, Bh3!
