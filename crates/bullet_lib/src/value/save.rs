@@ -148,6 +148,6 @@ where
     }
 
     pub fn dothis(&mut self, path: &str) {
-        self.optimiser.load_weights_from_file(path)
+        self.optimiser.load_weights_from_file(path);
     }
 }
