@@ -146,4 +146,8 @@ where
     pub fn save_unquantised(&self, path: &str) -> io::Result<()> {
         save_unquantised(self, path)
     }
+
+    pub fn dothis(&mut self, path: &str) {
+        self.optimiser.load_weights_from_file(path)
+    }
 }
