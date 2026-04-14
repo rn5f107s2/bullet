@@ -29,7 +29,7 @@ extern "C" __global__ void kernel(
     const int loc = MaximumBlocksY * blockIdx.z + blockIdx.y;
     const int row = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (row >= nnz * N || loc >= k)
+    if (row >= m || loc >= k)
         return;
 
     const int* tX = X + nnz * loc;
@@ -49,19 +49,7 @@ extern "C" __global__ void kernel(
 
     const int nRow = pc * HL + sq * N + idx;
 
-    const float tE = op(Y[offset + nRow]) * Yg[offset + nRow];
-
-    if (nRow >= m) {
-        printf("bad access %d %d %d\n", pc, sq, nRow);
-    }
-
-    if (isnan(Y[m * loc + nRow])) {
-        printf("dead output\n");
-    }
-
-    if (isnan(Yg[offset + nRow])) {
-        printf("dead gradient\n");
-    }
+    const float tE = op(Y[offset + row]) * Yg[offset + row];
 
     for (int i = 0; i < nnz; i++) {
         const int j = tX[i];
@@ -70,6 +58,6 @@ extern "C" __global__ void kernel(
             break;
 
         if (tE != 0.0F)
-            atomicAdd(&Ag[j * m + nRow], tE);
+            atomicAdd(&Ag[j * m + row], tE);
     }
 }
