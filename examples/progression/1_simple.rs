@@ -16,8 +16,8 @@ fn main() {
     // hyperparams to fiddle with
     let hl_size = 12 * 64 * 16;
     let initial_lr = 0.001;
-    let final_lr = 0.001 * 0.3f32.powi(5);
-    let superbatches = 300;
+    let final_lr = 0.001;
+    let superbatches = 20;
     let wdl_proportion = 0.5;
 
     let mut trainer = ValueTrainerBuilder::default()
@@ -83,9 +83,7 @@ fn main() {
         }
     );
 
-    //trainer.run(&schedule, &settings, &dataloader);
-
-    trainer.dothis("knowngood/params.bin");
+    trainer.run(&schedule, &settings, &dataloader);
 
     for fen in [
         "8/8/4kpp1/3p1b2/p6P/2B5/6P1/6K1 b - - 2 47", //https://www.chessgames.com/perl/chessgame?gid=1143956, Bh3!
