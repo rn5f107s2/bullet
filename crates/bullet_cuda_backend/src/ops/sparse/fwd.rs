@@ -24,7 +24,7 @@ pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
     let batched = indices.batch_size().is_some();
     let nnz = indices.sparse().nnz();
     let m = output_shape.rows();
-    let vectorise = m % 4 == 0 && m >= 128;
+    let vectorise = false;
 
     let code = kernel_str(bias, nnz, m, desc.activation, vectorise);
 
