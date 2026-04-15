@@ -145,9 +145,6 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
             if (j == -1) break;
 
             sum += A[j * m + nRow];
-
-            if (loc == 0)
-                printf(\"using weight %d for bpc %d bsq %d featurefeature %d\\n\", j * m + nRow, pc, sq, j);
         }}
 
         Y[m * loc + nRow] = op(sum);"
