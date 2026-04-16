@@ -44,7 +44,7 @@ fn main() {
         });
 
     let schedule = TrainingSchedule {
-        net_id: "1_simple".to_string(),
+        net_id: "IBegYou".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
