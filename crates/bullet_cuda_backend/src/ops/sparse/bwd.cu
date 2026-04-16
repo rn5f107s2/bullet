@@ -29,27 +29,13 @@ extern "C" __global__ void kernel(
     const int loc = MaximumBlocksY * blockIdx.z + blockIdx.y;
     const int row = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (row >= nnz * N || loc >= k)
+    if (row >= m || loc >= k)
         return;
 
     const int* tX = X + nnz * loc;
     const int offset = m * loc;
 
-    int index = row / N;
-
-    const int feat = tX[index];
-
-    if (feat == -1)
-        return;
-
-    const int pc = feat / 64;
-    const int sq = feat % 64;
-
-    const int idx = row % N;
-
-    const int nRow = pc * HL + sq * N + idx;
-
-    const float tE = op(Y[offset + nRow]) * Yg[offset + nRow];
+    const float tE = op(Y[offset + row]) * Yg[offset + row];
 
     for (int i = 0; i < nnz; i++) {
         const int j = tX[i];
@@ -58,6 +44,6 @@ extern "C" __global__ void kernel(
             break;
 
         if (tE != 0.0F)
-            atomicAdd(&Ag[j * m + nRow], tE);
+            atomicAdd(&Ag[j * m + row], tE);
     }
 }
