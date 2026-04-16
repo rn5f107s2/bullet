@@ -60,7 +60,7 @@ fn main() {
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 32 };
 
     let dataloader = ViriBinpackLoader::new(
-        "data/moly_oraclegcp_5ks_12khtempmix.vf",
+        "data/unfiltered.vf",
         4096,
         4,
         Filter {
