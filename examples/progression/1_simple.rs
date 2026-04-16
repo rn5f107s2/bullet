@@ -16,8 +16,8 @@ fn main() {
     // hyperparams to fiddle with
     let hl_size = 12 * 64 * 16;
     let initial_lr = 0.001;
-    let final_lr = 0.001_f32.powf(5.0);
-    let superbatches = 300;
+    let final_lr = 0.001;
+    let superbatches = 20;
     let wdl_proportion = 0.5;
 
     let mut trainer = ValueTrainerBuilder::default()
@@ -47,8 +47,8 @@ fn main() {
         net_id: "1_simple".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
-            batch_size: 16384,
-            batches_per_superbatch: 6104,
+            batch_size: 128,
+            batches_per_superbatch: 128,
             start_superbatch: 1,
             end_superbatch: superbatches,
         },
