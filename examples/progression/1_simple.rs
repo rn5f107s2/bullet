@@ -27,7 +27,7 @@ const OB_LAYOUT: [usize; 64] = [
 
 fn main() {
     // hyperparams to fiddle with
-    let hl_size = 12 * 64 * 16;
+    let hl_size = 64 * 16;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
     let superbatches = 300;
@@ -36,7 +36,7 @@ fn main() {
     let mut trainer = ValueTrainerBuilder::default()
         .dual_perspective()
         .optimiser(AdamW)
-        .inputs(Chess768)
+        .inputs(KernelKnowsBest::<12>)
         .output_buckets(KingOutputBuckets::<OB_LAYOUT>)
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(255),
