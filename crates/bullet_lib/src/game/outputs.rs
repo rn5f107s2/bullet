@@ -42,8 +42,8 @@ impl<const N: usize> OutputBuckets<MarlinFormat> for MaterialCount<N> {
 }
 
 pub struct KingOutputBuckets<const LAYOUT: [usize; 64]>;
-impl<const N: usize> OutputBuckets<ChessBoard> for KingOutputBuckets<N> {
-    const BUCKETS: usize = get_num_buckets(LAYOUT);
+impl<const LAYOUT: [usize; 64]> OutputBuckets<ChessBoard> for KingOutputBuckets<LAYOUT> {
+    const BUCKETS: usize = get_num_buckets(&LAYOUT);
 
     fn bucket(&self, pos: &ChessBoard) -> u8 {
         LAYOUT[pos.our_ksq()]
