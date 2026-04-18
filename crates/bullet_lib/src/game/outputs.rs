@@ -1,5 +1,7 @@
 use bulletformat::{ChessBoard, chess::MarlinFormat};
 
+use crate::game::inputs::get_num_buckets;
+
 pub trait OutputBuckets<T>: Send + Sync + Copy + Default + 'static {
     const BUCKETS: usize;
 
@@ -36,5 +38,14 @@ impl<const N: usize> OutputBuckets<MarlinFormat> for MaterialCount<N> {
     fn bucket(&self, pos: &MarlinFormat) -> u8 {
         let divisor = 32usize.div_ceil(N);
         (pos.occ().count_ones() as u8 - 2) / divisor as u8
+    }
+}
+
+pub struct KingOutputBuckets<const LAYOUT: [usize; 64]>;
+impl<const N: usize> OutputBuckets<ChessBoard> for KingOutputBuckets<N> {
+    const BUCKETS: usize = get_num_buckets(LAYOUT);
+
+    fn bucket(&self, pos: &ChessBoard) -> u8 {
+        LAYOUT[pos.our_ksq()]
     }
 }
