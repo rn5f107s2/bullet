@@ -44,7 +44,7 @@ fn main() {
         });
 
     let schedule = TrainingSchedule {
-        net_id: "IBegYou".to_string(),
+        net_id: "MaybeMaybe".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
@@ -62,17 +62,17 @@ fn main() {
     let dataloader = ViriBinpackLoader::new(
         "data/moly_oraclegcp_5ks_12khtempmix_fixed.vf",
         4096,
-        4,
+        8,
         Filter {
-            min_ply: 8,
-            min_pieces: 0,
+            min_ply: 23,
+            min_pieces: 4,
             max_eval: 32000,
             filter_tactical: true,
             filter_check: false,
             filter_castling: false,
             max_eval_incorrectness: u32::MAX,
-            random_fen_skipping: false,
-            random_fen_skip_probability: 0.00,
+            random_fen_skipping: true,
+            random_fen_skip_probability: 0.95,
             wdl_filtered: false,
             wdl_model_params_a: [0.0; 4],
             wdl_model_params_b: [0.0; 4],
