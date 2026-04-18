@@ -1,5 +1,5 @@
 use bullet_lib::{
-    game::{inputs::KernelKnowsBest, outputs::KingOutputBuckets},
+    game::{inputs::{Chess768, KernelKnowsBest}, outputs::KingOutputBuckets},
     nn::optimiser::AdamW,
     trainer::{
         save::SavedFormat,
@@ -27,7 +27,7 @@ const OB_LAYOUT: [usize; 64] = [
 
 fn main() {
     // hyperparams to fiddle with
-    let hl_size = 64 * 16;
+    let hl_size = 64 * 16 * 12;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
     let superbatches = 300;
@@ -36,7 +36,7 @@ fn main() {
     let mut trainer = ValueTrainerBuilder::default()
         .dual_perspective()
         .optimiser(AdamW)
-        .inputs(KernelKnowsBest::new(12))
+        .inputs(Chess768)
         .output_buckets(KingOutputBuckets::new(OB_LAYOUT))
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(255),
@@ -58,7 +58,7 @@ fn main() {
         });
 
     let schedule = TrainingSchedule {
-        net_id: "MaybeMaybe".to_string(),
+        net_id: "HopefullyHopefully".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
