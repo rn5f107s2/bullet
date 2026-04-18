@@ -4,6 +4,7 @@ mod chess768;
 mod chess_buckets;
 mod chess_buckets_mk;
 mod factorised;
+mod kernelKnowsBest;
 
 #[allow(deprecated)]
 mod legacy;
@@ -12,6 +13,7 @@ pub use adapter::MarlinFormatAdapter;
 pub use ataxx147::{Ataxx98, Ataxx147};
 pub use chess_buckets::{ChessBuckets, ChessBucketsMirrored};
 pub use chess768::Chess768;
+pub use kernelKnowsBest::KernelKnowsBest;
 pub use factorised::{Factorised, Factorises};
 
 #[allow(deprecated)]

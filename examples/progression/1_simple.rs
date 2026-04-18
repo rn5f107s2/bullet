@@ -1,5 +1,5 @@
 use bullet_lib::{
-    game::{inputs::Chess768, outputs::KingOutputBuckets},
+    game::{inputs::KernelKnowsBest, outputs::KingOutputBuckets},
     nn::optimiser::AdamW,
     trainer::{
         save::SavedFormat,
@@ -36,8 +36,8 @@ fn main() {
     let mut trainer = ValueTrainerBuilder::default()
         .dual_perspective()
         .optimiser(AdamW)
-        .inputs(KernelKnowsBest::<12>)
-        .output_buckets(KingOutputBuckets::<OB_LAYOUT>)
+        .inputs(KernelKnowsBest::new(12))
+        .output_buckets(KingOutputBuckets::new(OB_LAYOUT))
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
@@ -47,8 +47,8 @@ fn main() {
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs, output_buckets| {
             // weights
-            let l0 = builder.new_affine("l0", 768, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 1);
+            let l0 = builder.new_affine("l0", 768 * 12, hl_size);
+            let l1 = builder.new_affine("l1", 2 * hl_size, 15);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
