@@ -1,0 +1,58 @@
+use std::usize;
+
+use bulletformat::ChessBoard;
+
+use super::SparseInputType;
+
+#[derive(Clone, Copy, Debug)]
+pub struct KernelKnowsBest {
+    n: usize,
+}
+
+impl Default for KernelKnowsBest {
+    fn default() -> Self {
+        Self { n: 1 }
+    }
+}
+
+impl KernelKnowsBest {
+    pub fn new(num: usize) -> Self {
+        Self { n: num }
+    }
+}
+
+impl SparseInputType for KernelKnowsBest {
+    type RequiredDataType = ChessBoard;
+
+    /// The total number of inputs
+    fn num_inputs(&self) -> usize {
+        768 * self.n
+    }
+
+    /// The maximum number of active inputs
+    fn max_active(&self) -> usize {
+        32
+    }
+
+    fn map_features<F: FnMut(usize, usize)>(&self, pos: &Self::RequiredDataType, mut f: F) {
+        for (piece, square) in pos.into_iter() {
+            let c = usize::from(piece & 8 > 0);
+            let pc = 64 * usize::from(piece & 7);
+            let sq = usize::from(square);
+
+            let stm = [0, 384][c] + pc + (sq ^ 7);
+            let ntm = [384, 0][c] + pc + (sq ^ 63);
+            f(stm, ntm)
+        }
+    }
+
+    /// Shorthand for the input e.g. `768x4`
+    fn shorthand(&self) -> String {
+        "768".to_string()
+    }
+
+    /// Description of the input type
+    fn description(&self) -> String {
+        "Default psqt chess inputs".to_string()
+    }
+}
