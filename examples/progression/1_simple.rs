@@ -82,7 +82,7 @@ fn main() {
             min_pieces: 4,
             max_eval: 32000,
             filter_tactical: true,
-            filter_check: false,
+            filter_check: true,
             filter_castling: false,
             max_eval_incorrectness: u32::MAX,
             random_fen_skipping: true,
