@@ -147,6 +147,8 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
             sum += A[j * m + nRow];
         }}
 
-        Y[m * loc + nRow] = op(sum);"
+        const int outIdx = nRow % {HL};
+
+        Y[m * loc + outIdx] = op(sum);"
     )
 }

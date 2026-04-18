@@ -1,16 +1,29 @@
 use bullet_lib::{
-    game::inputs::Chess768,
+    game::{inputs::Chess768, outputs::KingOutputBuckets},
     nn::optimiser::AdamW,
     trainer::{
         save::SavedFormat,
         schedule::{TrainingSchedule, TrainingSteps, lr, wdl},
         settings::LocalSettings,
     },
-    value::{ValueTrainerBuilder},
+    value::ValueTrainerBuilder,
 };
 
 use bullet_lib::value::loader::ViriBinpackLoader;
 use viriformat::dataformat::Filter;
+
+#[rustfmt::skip]
+const OB_LAYOUT: [usize; 64] = [
+//  a   b   c   d   e   f   g  h
+    6 , 6 , 5 , 4 , 3 , 2 , 1 , 0 , // 1
+    9 , 9 , 9 , 8 , 8 , 8 , 7 , 7 , // 2
+    10, 10, 11, 11, 11, 11, 12, 12, // 3
+    10, 10, 11, 11, 11, 11, 12, 12, // 4
+    10, 10, 11, 11, 11, 11, 12, 12, // 5
+    13, 13, 13, 13, 14, 14, 14, 14, // 6
+    13, 13, 13, 13, 14, 14, 14, 14, // 7
+    13, 13, 13, 13, 14, 14, 14, 14, // 8
+];
 
 fn main() {
     // hyperparams to fiddle with
@@ -24,14 +37,15 @@ fn main() {
         .dual_perspective()
         .optimiser(AdamW)
         .inputs(Chess768)
+        .output_buckets(KingOutputBuckets::<OB_LAYOUT>)
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
-            SavedFormat::id("l1w").round().quantise::<i16>(64),
+            SavedFormat::id("l1w").round().quantise::<i16>(64).transpose(),
             SavedFormat::id("l1b").round().quantise::<i16>(255 * 64),
         ])
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
-        .build(|builder, stm_inputs, ntm_inputs| {
+        .build(|builder, stm_inputs, ntm_inputs, output_buckets| {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
             let l1 = builder.new_affine("l1", 2 * hl_size, 1);
@@ -40,7 +54,7 @@ fn main() {
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
             let hidden_layer = stm_hidden.concat(ntm_hidden);
-            l1.forward(hidden_layer)
+            l1.forward(hidden_layer).select(output_buckets)
         });
 
     let schedule = TrainingSchedule {
