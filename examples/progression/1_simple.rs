@@ -39,10 +39,10 @@ fn main() {
         .inputs(Chess768)
         .output_buckets(KingOutputBuckets::new(OB_LAYOUT))
         .save_format(&[
-            SavedFormat::id("l0w").round().quantise::<i16>(255),
-            SavedFormat::id("l0b").round().quantise::<i16>(255),
+            SavedFormat::id("l0w").round().quantise::<i16>(403),
+            SavedFormat::id("l0b").round().quantise::<i16>(403),
             SavedFormat::id("l1w").round().quantise::<i16>(64).transpose(),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 64),
+            SavedFormat::id("l1b").round().quantise::<i16>(403 * 64),
         ])
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs, output_buckets| {
@@ -56,6 +56,10 @@ fn main() {
             let hidden_layer = stm_hidden.concat(ntm_hidden);
             l1.forward(hidden_layer).select(output_buckets)
         });
+
+    let stricter_clipping =  AdamWParams { max_weight: 1.27, min_weight: -1.27, ..Default::default() };
+    trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
+    trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
         net_id: "HopefullyHopefully".to_string(),
