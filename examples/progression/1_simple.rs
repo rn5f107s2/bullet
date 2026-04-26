@@ -19,8 +19,10 @@ use viriformat::dataformat::Filter;
 
 use bullet_lib::value::loader::viribinpack::ViriFilter;
 
+use rand::prelude::*;
+
 fn filter(board: &Board, mv: Move, eval: i16, wdl: f32) -> bool {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
     let default_filter = Filter {
         min_ply: 0,
@@ -87,7 +89,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "QA403_2".to_string(),
+        net_id: "HeightFilter".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
