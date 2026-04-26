@@ -10,8 +10,46 @@ use bullet_lib::{
     value::{ValueTrainerBuilder},
 };
 
+use viriformat::chess::board::Board;
+use viriformat::chess::chessmove::Move;
+use viriformat::dataformat::WDL;
+
 use bullet_lib::value::loader::ViriBinpackLoader;
 use viriformat::dataformat::Filter;
+
+use bullet_lib::value::loader::viribinpack::ViriFilter;
+
+fn filter(board: &Board, mv: Move, eval: i16, wdl: f32) -> bool {
+    let mut rng = thread_rng();
+
+    let default_filter = Filter {
+        min_ply: 0,
+        min_pieces: 4,
+        max_eval: 32000,
+        filter_tactical: true,
+        filter_check: true,
+        filter_castling: false,
+        max_eval_incorrectness: u32::MAX,
+        random_fen_skipping: true,
+        random_fen_skip_probability: 0.95,
+        wdl_filtered: false,
+        wdl_model_params_a: [0.0; 4],
+        wdl_model_params_b: [0.0; 4],
+        material_min: 1,
+        material_max: 100000,
+        mom_target: 58,
+        wdl_heuristic_scale: 1.5,
+    };
+
+    let wdl = match wdl {
+        1.0 => WDL::Win,
+        0.5 => WDL::Draw,
+        0.0 => WDL::Loss,
+        _ => unreachable!(),
+    };
+
+    return !default_filter.should_filter(mv, eval as i32, board, wdl, &mut rng) && board.height() > 5 as usize;
+}
 
 fn main() {
     // hyperparams to fiddle with
@@ -68,24 +106,7 @@ fn main() {
         "/data/moly_oraclegcp_5ks_12khtempmix_fixed_4mntemp.vf",
         4096,
         8,
-        Filter {
-            min_ply: 23,
-            min_pieces: 4,
-            max_eval: 32000,
-            filter_tactical: true,
-            filter_check: true,
-            filter_castling: false,
-            max_eval_incorrectness: u32::MAX,
-            random_fen_skipping: true,
-            random_fen_skip_probability: 0.95,
-            wdl_filtered: false,
-            wdl_model_params_a: [0.0; 4],
-            wdl_model_params_b: [0.0; 4],
-            material_min: 1,
-            material_max: 100000,
-            mom_target: 58,
-            wdl_heuristic_scale: 1.5,
-        }
+        ViriFilter::Custom(filter),
     );
 
     trainer.run(&schedule, &settings, &dataloader);
