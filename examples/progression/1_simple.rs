@@ -1,7 +1,6 @@
 use bullet_lib::{
-    game::{inputs::{Chess768, KernelKnowsBest}, outputs::KingOutputBuckets},
+    game::{inputs::{Chess768}, outputs::KingOutputBuckets},
     nn::optimiser::AdamW,
-    nn::optimiser::AdamWParams,
     trainer::{
         save::SavedFormat,
         schedule::{TrainingSchedule, TrainingSteps, lr, wdl},
@@ -9,6 +8,8 @@ use bullet_lib::{
     },
     value::ValueTrainerBuilder,
 };
+
+use bullet_lib::nn::optimiser::AdamWParams;
 
 use bullet_lib::value::loader::ViriBinpackLoader;
 use viriformat::dataformat::Filter;
@@ -48,7 +49,7 @@ fn main() {
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs, output_buckets| {
             // weights
-            let l0 = builder.new_affine("l0", 768 * 12, hl_size);
+            let l0 = builder.new_affine("l0", 768, hl_size);
             let l1 = builder.new_affine("l1", 2 * hl_size, 15);
 
             // inference
@@ -63,7 +64,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "HopefullyHopefully".to_string(),
+        net_id: "KingOutputBuckets".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
