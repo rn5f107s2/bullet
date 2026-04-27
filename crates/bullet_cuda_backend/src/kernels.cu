@@ -212,9 +212,11 @@ BULLET_KERNEL_IMPL adamOp(
     float* v,
     const float* g)
 {
-    p[0] *= decay;
-
     const float grad = adj * g[0];
+
+    if (grad != 0.0F)
+        p[0] *= decay;
+
     m[0] = beta1 * m[0] + (1.0F - beta1) * grad;
     v[0] = beta2 * v[0] + (1.0F - beta2) * grad * grad;
 
