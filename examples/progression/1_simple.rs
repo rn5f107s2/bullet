@@ -53,7 +53,7 @@ fn main() {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
             let l1 = builder.new_affine("l1", 2 * hl_size, 15);
-            let l1_fact = builder.new_affine("l1f", 2 * hl_size, 1);
+            let l1_fact = builder.new_affine("l1_fact", 2 * hl_size, 1);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
