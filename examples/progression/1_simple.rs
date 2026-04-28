@@ -22,9 +22,9 @@ const OB_LAYOUT: [usize; 64] = [
     10, 10, 11, 11, 11, 11, 12, 12, // 3
     10, 10, 11, 11, 11, 11, 12, 12, // 4
     10, 10, 11, 11, 11, 11, 12, 12, // 5
-    13, 13, 13, 13, 14, 14, 14, 14, // 6
-    13, 13, 13, 13, 14, 14, 14, 14, // 7
-    13, 13, 13, 13, 14, 14, 14, 14, // 8
+    13, 13, 13, 13, 13, 13, 13, 13, // 6
+    13, 13, 13, 13, 13, 13, 13, 13, // 7
+    13, 13, 13, 13, 13, 13, 13, 13, // 8
 ];
 
 fn main() {
@@ -52,7 +52,7 @@ fn main() {
         .build(|builder, stm_inputs, ntm_inputs, output_buckets| {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 15);
+            let l1 = builder.new_affine("l1", 2 * hl_size, 14);
             let l1_fact = builder.new_affine("l1_fact", 2 * hl_size, 1);
 
             // inference

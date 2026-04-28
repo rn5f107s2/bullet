@@ -59,7 +59,7 @@ impl KingOutputBuckets {
 }
 
 impl OutputBuckets<ChessBoard> for KingOutputBuckets {
-    const BUCKETS: usize = 15;
+    const BUCKETS: usize = 14;
 
     fn bucket(&self, pos: &ChessBoard) -> u8 {
         self.layout[pos.our_ksq() as usize] as u8
