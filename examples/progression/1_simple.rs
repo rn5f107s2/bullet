@@ -43,7 +43,9 @@ fn main() {
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(403),
             SavedFormat::id("l0b").round().quantise::<i16>(403),
+            SavedFormat::id("l1_factw").round().quantise::<i16>(64).transpose(),
             SavedFormat::id("l1w").round().quantise::<i16>(64).transpose(),
+            SavedFormat::id("l1_factb").round().quantise::<i16>(403 * 64),
             SavedFormat::id("l1b").round().quantise::<i16>(403 * 64),
         ])
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
@@ -51,17 +53,20 @@ fn main() {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
             let l1 = builder.new_affine("l1", 2 * hl_size, 15);
+            let l1_fact = builder.new_affine("l1f", 2 * hl_size, 1);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
             let hidden_layer = stm_hidden.concat(ntm_hidden);
-            l1.forward(hidden_layer).select(output_buckets)
+            l1.forward(hidden_layer).select(output_buckets) + l1_fact.forward(hidden_layer)
         });
 
-    let stricter_clipping =  AdamWParams { max_weight: 1.27, min_weight: -1.27, ..Default::default() };
+    let stricter_clipping =  AdamWParams { max_weight: 0.635, min_weight: -0.635, ..Default::default() };
     trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
+    trainer.optimiser.set_params_for_weight("l1_factw", stricter_clipping);
+    trainer.optimiser.set_params_for_weight("l1_factb", stricter_clipping);
 
     let schedule = TrainingSchedule {
         net_id: "KingOutputBuckets".to_string(),
