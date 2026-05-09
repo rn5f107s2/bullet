@@ -66,7 +66,7 @@ fn main() {
 
     let dataloader = ViriBinpackLoader::new(
         "/data/moly_oraclegcp_5ks_12khtempmix_fixed_4mntemp.vf",
-        4096,
+        8192,
         8,
         Filter {
             min_ply: 23,
@@ -77,7 +77,7 @@ fn main() {
             filter_castling: false,
             max_eval_incorrectness: u32::MAX,
             random_fen_skipping: true,
-            random_fen_skip_probability: 0.95,
+            random_fen_skip_probability: 0.90,
             wdl_filtered: false,
             wdl_model_params_a: [0.0; 4],
             wdl_model_params_b: [0.0; 4],
