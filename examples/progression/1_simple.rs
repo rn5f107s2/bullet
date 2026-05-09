@@ -15,7 +15,7 @@ use viriformat::dataformat::Filter;
 
 fn main() {
     // hyperparams to fiddle with
-    let hl_size = 12 * 64 * 16;
+    let hl_size = 12 * 64 * 24;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
     let superbatches = 300;
