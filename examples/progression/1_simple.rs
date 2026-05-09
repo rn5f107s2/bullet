@@ -39,6 +39,7 @@ fn main() {
         .dual_perspective()
         .optimiser(AdamW)
         .inputs(Chess768)
+        .use_devices(1)
         .output_buckets(KingOutputBuckets::new(OB_LAYOUT))
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(403),
