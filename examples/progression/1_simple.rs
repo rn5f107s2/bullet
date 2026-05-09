@@ -49,7 +49,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "QA403_2".to_string(),
+        net_id: "DoubleShuffBuffHalfSkip".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
