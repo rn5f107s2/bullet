@@ -1,6 +1,6 @@
 use bullet_lib::{
     game::{inputs::Chess768, outputs::KingOutputBuckets},
-    nn::{Shape, optimiser::AdamW},
+    nn::{Shape, optimiser::AdamW, optimiser::AdamWParams},
     trainer::{
         save::SavedFormat,
         schedule::{TrainingSchedule, TrainingSteps, lr, wdl},
@@ -11,6 +11,21 @@ use bullet_lib::{
 
 use bullet_lib::value::loader::ViriBinpackLoader;
 use viriformat::dataformat::Filter;
+
+const N_OB: usize = 15;
+
+#[rustfmt::skip]
+const OB_LAYOUT: [usize; 64] = [
+//  a   b   c   d   e   f   g  h
+    6 , 6 , 5 , 4 , 3 , 2 , 1 , 0 , // 1
+    9 , 9 , 9 , 8 , 8 , 8 , 7 , 7 , // 2
+    10, 10, 11, 11, 11, 11, 12, 12, // 3
+    10, 10, 11, 11, 11, 11, 12, 12, // 4
+    10, 10, 11, 11, 11, 11, 12, 12, // 5
+    13, 13, 13, 13, 14, 14, 14, 14, // 6
+    13, 13, 13, 13, 14, 14, 14, 14, // 7
+    13, 13, 13, 13, 14, 14, 14, 14, // 8
+];
 
 fn main() {
     // hyperparams to fiddle with
@@ -24,31 +39,39 @@ fn main() {
         .dual_perspective()
         .optimiser(AdamW)
         .inputs(Chess768)
+        .output_buckets(KingOutputBuckets::new(OB_LAYOUT))
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(403),
             SavedFormat::id("l0b").round().quantise::<i16>(403),
-            SavedFormat::id("l1w").round().quantise::<i16>(64),
-            SavedFormat::id("l1b").round().quantise::<i16>(403 * 64),
+            SavedFormat::id("l1_stmw").round().quantise::<i16>(64).transpose(),
+            SavedFormat::id("l1_ntmw").round().quantise::<i16>(64).transpose(),
+            SavedFormat::id("l1_stmb").round().quantise::<i16>(403 * 64),
+            SavedFormat::id("l1_ntmb").round().quantise::<i16>(403 * 64),
         ])
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
-        .build(|builder, stm_inputs, ntm_inputs| {
+        .build(|builder, stm_inputs, ntm_inputs, output_buckets| {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 1);
+            let l1_stm = builder.new_affine("l1_stm", hl_size, N_OB);
+            let l1_ntm = builder.new_affine("l1_ntm", hl_size, N_OB);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
-            let hidden_layer = stm_hidden.concat(ntm_hidden);
-            l1.forward(hidden_layer)
+            let res_stm = l1_stm.forward(stm_hidden).select_lo(output_buckets);
+            let res_ntm = l1_ntm.forward(ntm_hidden).select_hi(output_buckets);
+            
+            res_stm + res_ntm
         });
 
     let stricter_clipping =  AdamWParams { max_weight: 1.27, min_weight: -1.27, ..Default::default() };
-    trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
-    trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
+    trainer.optimiser.set_params_for_weight("l1_stmw", stricter_clipping);
+    trainer.optimiser.set_params_for_weight("l1_ntmw", stricter_clipping);
+    trainer.optimiser.set_params_for_weight("l1_stmb", stricter_clipping);
+    trainer.optimiser.set_params_for_weight("l1_ntmb", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "DoubleShuffBuffHalfSkip".to_string(),
+        net_id: "AsymKingOB".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
