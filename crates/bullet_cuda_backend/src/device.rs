@@ -206,6 +206,88 @@ impl CoreDeviceOps for CudaDevice {
         Ok(())
     }
 
+    fn select_hi(
+        batch_size: usize,
+        input_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        input: &Self::BufferF32,
+        indices: &Self::BufferI32,
+        output: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError> {
+        if if input_batched { batch_size } else { 1 } * input_size > input.size()
+            || batch_size > indices.size()
+            || batch_size * output_size > output.size()
+        {
+            return OperationResult::Err(OperationError::IndexOutOfBounds);
+        }
+
+        let func = input.device.module.load_function("select_hi").map_err(CudaError::Driver)?;
+
+        let threads = 1024;
+        let grid_dim = (((batch_size * output_size) as u32).div_ceil(threads), 1, 1);
+        let cfg = LaunchConfig { grid_dim, block_dim: (threads, 1, 1), shared_mem_bytes: 0 };
+
+        unsafe {
+            input
+                .device
+                .stream
+                .launch_builder(&func)
+                .arg(&(batch_size as i32))
+                .arg(&(input_batched as i32))
+                .arg(&(input_size as i32))
+                .arg(&(output_size as i32))
+                .arg(&indices.buf)
+                .arg(&input.buf)
+                .arg(&mut output.buf)
+                .launch(cfg)
+                .map_err(CudaError::Driver)?;
+        }
+
+        Ok(())
+    }
+
+    fn select_lo(
+        batch_size: usize,
+        input_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        input: &Self::BufferF32,
+        indices: &Self::BufferI32,
+        output: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError> {
+        if if input_batched { batch_size } else { 1 } * input_size > input.size()
+            || batch_size > indices.size()
+            || batch_size * output_size > output.size()
+        {
+            return OperationResult::Err(OperationError::IndexOutOfBounds);
+        }
+
+        let func = input.device.module.load_function("select_lo").map_err(CudaError::Driver)?;
+
+        let threads = 1024;
+        let grid_dim = (((batch_size * output_size) as u32).div_ceil(threads), 1, 1);
+        let cfg = LaunchConfig { grid_dim, block_dim: (threads, 1, 1), shared_mem_bytes: 0 };
+
+        unsafe {
+            input
+                .device
+                .stream
+                .launch_builder(&func)
+                .arg(&(batch_size as i32))
+                .arg(&(input_batched as i32))
+                .arg(&(input_size as i32))
+                .arg(&(output_size as i32))
+                .arg(&indices.buf)
+                .arg(&input.buf)
+                .arg(&mut output.buf)
+                .launch(cfg)
+                .map_err(CudaError::Driver)?;
+        }
+
+        Ok(())
+    }
+
     fn select_backprop(
         batch_size: usize,
         input_grad_batched: bool,
@@ -223,6 +305,88 @@ impl CoreDeviceOps for CudaDevice {
         }
 
         let func = input_grad.device.module.load_function("select_backprop").map_err(CudaError::Driver)?;
+
+        let threads = 1024;
+        let grid_dim = (((batch_size * output_size) as u32).div_ceil(threads), 1, 1);
+        let cfg = LaunchConfig { grid_dim, block_dim: (threads, 1, 1), shared_mem_bytes: 0 };
+
+        unsafe {
+            input_grad
+                .device
+                .stream
+                .launch_builder(&func)
+                .arg(&(batch_size as i32))
+                .arg(&(input_grad_batched as i32))
+                .arg(&(input_size as i32))
+                .arg(&(output_size as i32))
+                .arg(&indices.buf)
+                .arg(&output_grad.buf)
+                .arg(&mut input_grad.buf)
+                .launch(cfg)
+                .map_err(CudaError::Driver)?;
+        }
+
+        Ok(())
+    }
+
+    fn select_backprop_lo(
+        batch_size: usize,
+        input_grad_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        indices: &Self::BufferI32,
+        output_grad: &Self::BufferF32,
+        input_grad: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError> {
+        if if input_grad_batched { batch_size } else { 1 } * input_size > input_grad.size()
+            || batch_size > indices.size()
+            || batch_size * output_size > output_grad.size()
+        {
+            return OperationResult::Err(OperationError::IndexOutOfBounds);
+        }
+
+        let func = input_grad.device.module.load_function("select_backprop_lo").map_err(CudaError::Driver)?;
+
+        let threads = 1024;
+        let grid_dim = (((batch_size * output_size) as u32).div_ceil(threads), 1, 1);
+        let cfg = LaunchConfig { grid_dim, block_dim: (threads, 1, 1), shared_mem_bytes: 0 };
+
+        unsafe {
+            input_grad
+                .device
+                .stream
+                .launch_builder(&func)
+                .arg(&(batch_size as i32))
+                .arg(&(input_grad_batched as i32))
+                .arg(&(input_size as i32))
+                .arg(&(output_size as i32))
+                .arg(&indices.buf)
+                .arg(&output_grad.buf)
+                .arg(&mut input_grad.buf)
+                .launch(cfg)
+                .map_err(CudaError::Driver)?;
+        }
+
+        Ok(())
+    }
+
+    fn select_backprop_hi(
+        batch_size: usize,
+        input_grad_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        indices: &Self::BufferI32,
+        output_grad: &Self::BufferF32,
+        input_grad: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError> {
+        if if input_grad_batched { batch_size } else { 1 } * input_size > input_grad.size()
+            || batch_size > indices.size()
+            || batch_size * output_size > output_grad.size()
+        {
+            return OperationResult::Err(OperationError::IndexOutOfBounds);
+        }
+
+        let func = input_grad.device.module.load_function("select_backprop_hi").map_err(CudaError::Driver)?;
 
         let threads = 1024;
         let grid_dim = (((batch_size * output_size) as u32).div_ceil(threads), 1, 1);

@@ -266,6 +266,8 @@ impl<B: BackendMarker> GraphIROperationCompilable<B> for FusedPairwiseMulConcat 
 pub struct Select {
     pub input: AnnotatedNode,
     pub buckets: AnnotatedNode,
+    pub lo: bool,
+    pub hi: bool,
 }
 
 impl<B: BackendMarker> GraphIROperationBase<B> for Select {
@@ -304,7 +306,13 @@ where
         let mut func = DeviceFunction::default();
 
         func.push(function::MaybeUpdateBatchSize { input: buckets.clone(), output: output.clone() });
-        func.push(function::Select { input, output, buckets });
+        if !self.hi && !self.lo {
+            func.push(function::Select { input, output, buckets });
+        } else if self.hi {
+            func.push(function::SelectHi { input, output, buckets });
+        } else {
+            func.push(function::SelectLo { input, output, buckets });
+        }
 
         func
     }
@@ -318,7 +326,14 @@ where
             let values = graph.get_ref(self.input.idx, GraphNodeIdTy::Values);
 
             func.push(function::MaybeUpdateBatchSize { input: values, output: output.clone() });
-            func.push(function::SelectBackprop { input, output, buckets });
+
+            if !self.hi && !self.lo {
+                func.push(function::SelectBackprop { input, output, buckets });
+            } else if self.hi {
+                func.push(function::SelectBackpropHi { input, output, buckets });
+            } else {
+                func.push(function::SelectBackpropLo { input, output, buckets });
+            }
         }
 
         func

@@ -1,12 +1,8 @@
 use acyclib::device::tensor::Tensor;
+use bullet_lib::nn::Shape;
 use bullet_lib::{
-<<<<<<< HEAD
-    game::{inputs::{Chess768}, outputs::KingOutputBuckets},
-    nn::optimiser::AdamW,
-=======
     game::{inputs::Chess768, outputs::KingOutputBuckets},
     nn::{Shape, optimiser::AdamW},
->>>>>>> 589db35 (maybe)
     trainer::{
         save::SavedFormat,
         schedule::{TrainingSchedule, TrainingSteps, lr, wdl},
@@ -64,8 +60,8 @@ fn main() {
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
-            let res_stm = l1_stm.forward(stm_hidden).select(output_buckets);
-            let res_ntm = l1_ntm.forward(ntm_hidden).concat(ntm_hidden.slice_rows(0, 1)).select(output_buckets);
+            let res_stm = l1_stm.forward(stm_hidden).select_lo(output_buckets);
+            let res_ntm = l1_ntm.forward(ntm_hidden).select_hi(output_buckets);
             
             res_stm + res_ntm
         });

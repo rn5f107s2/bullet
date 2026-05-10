@@ -11,7 +11,47 @@ pub trait CoreDeviceOps: Device {
         output: &mut Self::BufferF32,
     ) -> OperationResult<Self::DeviceError>;
 
+    fn select_hi(
+        batch_size: usize,
+        input_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        input: &Self::BufferF32,
+        indices: &Self::BufferI32,
+        output: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError>;
+
+    fn select_lo(
+        batch_size: usize,
+        input_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        input: &Self::BufferF32,
+        indices: &Self::BufferI32,
+        output: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError>;
+
     fn select_backprop(
+        batch_size: usize,
+        input_grad_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        indices: &Self::BufferI32,
+        output_grad: &Self::BufferF32,
+        input_grad: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError>;
+
+    fn select_backprop_hi(
+        batch_size: usize,
+        input_grad_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        indices: &Self::BufferI32,
+        output_grad: &Self::BufferF32,
+        input_grad: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError>;
+
+    fn select_backprop_lo(
         batch_size: usize,
         input_grad_batched: bool,
         input_size: usize,
