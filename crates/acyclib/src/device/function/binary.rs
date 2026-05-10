@@ -152,6 +152,84 @@ impl<D: CoreDeviceOps> DeviceOperation<D> for Select<D> {
     }
 }
 
+pub struct SelectHi<D: Device> {
+    pub input: TensorRef<D>,
+    pub output: TensorRef<D>,
+    pub buckets: TensorRef<D>,
+}
+
+impl<D: CoreDeviceOps> DeviceOperation<D> for SelectHi<D> {
+    fn opname(&self) -> String {
+        "SelectHi".to_string()
+    }
+
+    fn execute(&self) -> Result<(), OperationError<<D as Device>::DeviceError>> {
+        let input = self.input.dense();
+        let mut output = self.output.dense_mut();
+        let buckets = self.buckets.sparse();
+
+        if output.batch_size() != buckets.batch_size() {
+            return Err(OperationError::MismatchedBatchSizes);
+        }
+
+        let input_size = input.single_size();
+        let output_size = output.single_size();
+
+        if input_size != buckets.single_size() * output_size || buckets.nnz() != 1 {
+            return Err(OperationError::InvalidTensorFormat);
+        }
+
+        D::select_hi(
+            output.batch_size().unwrap_or(1),
+            input.batch_size().is_some(),
+            input_size,
+            output_size,
+            &input.buf,
+            &buckets.buf,
+            &mut output.buf,
+        )
+    }
+}
+
+pub struct SelectLo<D: Device> {
+    pub input: TensorRef<D>,
+    pub output: TensorRef<D>,
+    pub buckets: TensorRef<D>,
+}
+
+impl<D: CoreDeviceOps> DeviceOperation<D> for SelectLo<D> {
+    fn opname(&self) -> String {
+        "SelectLo".to_string()
+    }
+
+    fn execute(&self) -> Result<(), OperationError<<D as Device>::DeviceError>> {
+        let input = self.input.dense();
+        let mut output = self.output.dense_mut();
+        let buckets = self.buckets.sparse();
+
+        if output.batch_size() != buckets.batch_size() {
+            return Err(OperationError::MismatchedBatchSizes);
+        }
+
+        let input_size = input.single_size();
+        let output_size = output.single_size();
+
+        if input_size != buckets.single_size() * output_size || buckets.nnz() != 1 {
+            return Err(OperationError::InvalidTensorFormat);
+        }
+
+        D::select_lo(
+            output.batch_size().unwrap_or(1),
+            input.batch_size().is_some(),
+            input_size,
+            output_size,
+            &input.buf,
+            &buckets.buf,
+            &mut output.buf,
+        )
+    }
+}
+
 pub struct SelectBackprop<D: Device> {
     pub input: TensorRef<D>,
     pub output: TensorRef<D>,
@@ -180,6 +258,84 @@ impl<D: CoreDeviceOps> DeviceOperation<D> for SelectBackprop<D> {
         }
 
         D::select_backprop(
+            input.batch_size().unwrap_or(1),
+            output.batch_size().is_some(),
+            output_size,
+            input_size,
+            &buckets.buf,
+            &input.buf,
+            &mut output.buf,
+        )
+    }
+}
+
+pub struct SelectBackpropHi<D: Device> {
+    pub input: TensorRef<D>,
+    pub output: TensorRef<D>,
+    pub buckets: TensorRef<D>,
+}
+
+impl<D: CoreDeviceOps> DeviceOperation<D> for SelectBackpropHi<D> {
+    fn opname(&self) -> String {
+        "SelectBackpropHi".to_string()
+    }
+
+    fn execute(&self) -> Result<(), OperationError<<D as Device>::DeviceError>> {
+        let input = self.input.dense();
+        let mut output = self.output.dense_mut();
+        let buckets = self.buckets.sparse();
+
+        if input.batch_size() != buckets.batch_size() {
+            return Err(OperationError::MismatchedBatchSizes);
+        }
+
+        let input_size = input.single_size();
+        let output_size = output.single_size();
+
+        if output_size != buckets.single_size() * input_size || buckets.nnz() != 1 {
+            return Err(OperationError::InvalidTensorFormat);
+        }
+
+        D::select_backprop_hi(
+            input.batch_size().unwrap_or(1),
+            output.batch_size().is_some(),
+            output_size,
+            input_size,
+            &buckets.buf,
+            &input.buf,
+            &mut output.buf,
+        )
+    }
+}
+
+pub struct SelectBackpropLo<D: Device> {
+    pub input: TensorRef<D>,
+    pub output: TensorRef<D>,
+    pub buckets: TensorRef<D>,
+}
+
+impl<D: CoreDeviceOps> DeviceOperation<D> for SelectBackpropLo<D> {
+    fn opname(&self) -> String {
+        "SelectBackpropLo".to_string()
+    }
+
+    fn execute(&self) -> Result<(), OperationError<<D as Device>::DeviceError>> {
+        let input = self.input.dense();
+        let mut output = self.output.dense_mut();
+        let buckets = self.buckets.sparse();
+
+        if input.batch_size() != buckets.batch_size() {
+            return Err(OperationError::MismatchedBatchSizes);
+        }
+
+        let input_size = input.single_size();
+        let output_size = output.single_size();
+
+        if output_size != buckets.single_size() * input_size || buckets.nnz() != 1 {
+            return Err(OperationError::InvalidTensorFormat);
+        }
+
+        D::select_backprop_lo(
             input.batch_size().unwrap_or(1),
             output.batch_size().is_some(),
             output_size,

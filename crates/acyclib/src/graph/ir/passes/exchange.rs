@@ -27,7 +27,7 @@ where
     fn try_pass_on_node(&self, ir: &mut GraphIR<B>, target: NodeId) -> Result<bool, GraphIRError> {
         let old_data = ir.get(target)?;
 
-        if let Some(Select { input, buckets }) = downcast(old_data.op()) {
+        if let Some(Select { input, buckets, lo, hi }) = downcast(old_data.op()) {
             let parent = ir.get(input.idx)?;
 
             if parent.children() == 1 {
@@ -36,7 +36,7 @@ where
 
                     for (node, weight) in items {
                         let input = AnnotatedNode { idx: node, shape };
-                        new.push((ir.create(Select { input, buckets })?, weight));
+                        new.push((ir.create(Select { input, buckets, lo, hi })?, weight));
                     }
 
                     ir.replace(target, LinearCombination::new(new)?)?;
@@ -47,7 +47,7 @@ where
 
             if parent.children() == 1 {
                 if let Some(Unary { input, op }) = downcast(parent.op()) {
-                    let input = ir.create(Select { input, buckets })?;
+                    let input = ir.create(Select { input, buckets, lo, hi })?;
                     ir.replace(target, Unary { input, op })?;
 
                     return Ok(true);

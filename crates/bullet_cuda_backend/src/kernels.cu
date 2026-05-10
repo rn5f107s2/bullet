@@ -479,6 +479,58 @@ BULLET_KERNEL select(
     thisOutput[0] = thisInput[0];
 }
 
+BULLET_KERNEL select_lo(
+    const int batch_size,
+    const int input_batched,
+    const int input_size,
+    const int output_size,
+    const int* buckets,
+    const float* in,
+    float* out)
+{
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (tid >= batch_size * output_size)
+        return;
+
+    const int idxInBatch = tid / output_size;
+    const int idxInOutput = tid % output_size;
+
+    const int thisBucket = buckets[idxInBatch] & 0x0f;
+
+    const int inputOffset = input_batched ? input_size * idxInBatch : 0;
+    const float* thisInput = in + inputOffset + output_size * thisBucket + idxInOutput;
+    float* thisOutput = out + output_size * idxInBatch + idxInOutput;
+
+    thisOutput[0] = thisInput[0];
+}
+
+BULLET_KERNEL select_hi(
+    const int batch_size,
+    const int input_batched,
+    const int input_size,
+    const int output_size,
+    const int* buckets,
+    const float* in,
+    float* out)
+{
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (tid >= batch_size * output_size)
+        return;
+
+    const int idxInBatch = tid / output_size;
+    const int idxInOutput = tid % output_size;
+
+    const int thisBucket = (buckets[idxInBatch] & 0xf0) >> 4;
+
+    const int inputOffset = input_batched ? input_size * idxInBatch : 0;
+    const float* thisInput = in + inputOffset + output_size * thisBucket + idxInOutput;
+    float* thisOutput = out + output_size * idxInBatch + idxInOutput;
+
+    thisOutput[0] = thisInput[0];
+}
+
 BULLET_KERNEL select_backprop(
     const int batch_size,
     const int input_grad_batched,
@@ -497,6 +549,70 @@ BULLET_KERNEL select_backprop(
     const int idxInOutput = tid % output_size;
 
     const int thisBucket = buckets[idxInBatch];
+
+    const float* thisOutputGrad = output_grad + output_size * idxInBatch + idxInOutput;
+
+    float* thisInputGrad = input_grad + output_size * thisBucket + idxInOutput;
+    if (input_grad_batched)
+    {
+        thisInputGrad[input_size * idxInBatch] += thisOutputGrad[0];
+    }
+    else
+    {
+        atomicAdd(thisInputGrad, thisOutputGrad[0]);
+    }
+}
+
+BULLET_KERNEL select_backprop_lo(
+    const int batch_size,
+    const int input_grad_batched,
+    const int input_size,
+    const int output_size,
+    const int* buckets,
+    const float* output_grad,
+    float* input_grad)
+{
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (tid >= batch_size * output_size)
+        return;
+
+    const int idxInBatch = tid / output_size;
+    const int idxInOutput = tid % output_size;
+
+    const int thisBucket = buckets[idxInBatch] & 0x0f;
+
+    const float* thisOutputGrad = output_grad + output_size * idxInBatch + idxInOutput;
+
+    float* thisInputGrad = input_grad + output_size * thisBucket + idxInOutput;
+    if (input_grad_batched)
+    {
+        thisInputGrad[input_size * idxInBatch] += thisOutputGrad[0];
+    }
+    else
+    {
+        atomicAdd(thisInputGrad, thisOutputGrad[0]);
+    }
+}
+
+BULLET_KERNEL select_backprop_hi(
+    const int batch_size,
+    const int input_grad_batched,
+    const int input_size,
+    const int output_size,
+    const int* buckets,
+    const float* output_grad,
+    float* input_grad)
+{
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (tid >= batch_size * output_size)
+        return;
+
+    const int idxInBatch = tid / output_size;
+    const int idxInOutput = tid % output_size;
+
+    const int thisBucket = (buckets[idxInBatch] & 0xf0) >> 4;
 
     const float* thisOutputGrad = output_grad + output_size * idxInBatch + idxInOutput;
 

@@ -38,3 +38,30 @@ impl<const N: usize> OutputBuckets<MarlinFormat> for MaterialCount<N> {
         (pos.occ().count_ones() as u8 - 2) / divisor as u8
     }
 }
+
+#[derive(Clone, Copy)]
+pub struct KingOutputBuckets {
+    layout: [usize; 64],
+}
+
+impl Default for KingOutputBuckets {
+    fn default() -> Self {
+        Self {
+            layout: [0; 64],
+        }
+    }
+}
+
+impl KingOutputBuckets {
+    pub fn new(bucket_layout: [usize; 64]) -> Self {
+        Self { layout: bucket_layout }
+    }
+}
+
+impl OutputBuckets<ChessBoard> for KingOutputBuckets {
+    const BUCKETS: usize = 15;
+
+    fn bucket(&self, pos: &ChessBoard) -> u8 {
+        self.layout[pos.our_ksq() as usize] as u8 | (self.layout[pos.opp_ksq() as usize] << 4) as u8
+    }
+}

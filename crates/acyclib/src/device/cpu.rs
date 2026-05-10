@@ -127,6 +127,48 @@ impl CoreDeviceOps for CpuThread {
         Ok(())
     }
 
+    fn select_lo(
+        batch_size: usize,
+        input_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        input: &Self::BufferF32,
+        indices: &Self::BufferI32,
+        output: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError> {
+        for i in 0..batch_size {
+            let bucket = (indices.buf[i] & 0x0f) as usize;
+            let offset = if input_batched { i * input_size } else { 0 };
+
+            for j in 0..output_size {
+                output.buf[output_size * i + j] = input.buf[offset + output_size * bucket + j];
+            }
+        }
+
+        Ok(())
+    }
+
+    fn select_hi(
+        batch_size: usize,
+        input_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        input: &Self::BufferF32,
+        indices: &Self::BufferI32,
+        output: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError> {
+        for i in 0..batch_size {
+            let bucket = ((indices.buf[i] & 0xf0) >> 4) as usize;
+            let offset = if input_batched { i * input_size } else { 0 };
+
+            for j in 0..output_size {
+                output.buf[output_size * i + j] = input.buf[offset + output_size * bucket + j];
+            }
+        }
+
+        Ok(())
+    }
+
     fn select_backprop(
         batch_size: usize,
         input_batched: bool,
@@ -138,6 +180,48 @@ impl CoreDeviceOps for CpuThread {
     ) -> OperationResult<Self::DeviceError> {
         for i in 0..batch_size {
             let bucket = indices.buf[i] as usize;
+            let offset = if input_batched { i * input_size } else { 0 };
+
+            for j in 0..output_size {
+                input_grad.buf[offset + output_size * bucket + j] += output_grad.buf[output_size * i + j];
+            }
+        }
+
+        Ok(())
+    }
+
+    fn select_backprop_lo(
+        batch_size: usize,
+        input_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        indices: &Self::BufferI32,
+        output_grad: &Self::BufferF32,
+        input_grad: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError> {
+        for i in 0..batch_size {
+            let bucket = (indices.buf[i] & 0x0f) as usize;
+            let offset = if input_batched { i * input_size } else { 0 };
+
+            for j in 0..output_size {
+                input_grad.buf[offset + output_size * bucket + j] += output_grad.buf[output_size * i + j];
+            }
+        }
+
+        Ok(())
+    }
+
+    fn select_backprop_hi(
+        batch_size: usize,
+        input_batched: bool,
+        input_size: usize,
+        output_size: usize,
+        indices: &Self::BufferI32,
+        output_grad: &Self::BufferF32,
+        input_grad: &mut Self::BufferF32,
+    ) -> OperationResult<Self::DeviceError> {
+        for i in 0..batch_size {
+            let bucket = ((indices.buf[i] & 0xf0) >> 4) as usize;
             let offset = if input_batched { i * input_size } else { 0 };
 
             for j in 0..output_size {

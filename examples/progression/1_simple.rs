@@ -1,7 +1,6 @@
 use bullet_lib::{
-    game::inputs::Chess768,
-    nn::optimiser::AdamW,
-    nn::optimiser::AdamWParams,
+    game::{inputs::Chess768, outputs::KingOutputBuckets},
+    nn::{Shape, optimiser::AdamW},
     trainer::{
         save::SavedFormat,
         schedule::{TrainingSchedule, TrainingSteps, lr, wdl},

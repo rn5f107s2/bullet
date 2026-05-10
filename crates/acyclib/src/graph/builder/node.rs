@@ -152,7 +152,25 @@ where
     Select: GraphIROperationCompilable<B>,
 {
     pub fn select(self, buckets: Self) -> Self {
-        self.builder.apply(Select { input: self.node, buckets: buckets.node })
+        self.builder.apply(Select { input: self.node, buckets: buckets.node, lo: false, hi: false })
+    }
+}
+
+impl<B: BackendMarker> GraphBuilderNode<'_, B>
+where
+    Select: GraphIROperationCompilable<B>,
+{
+    pub fn select_hi(self, buckets: Self) -> Self {
+        self.builder.apply(Select { input: self.node, buckets: buckets.node, lo: false, hi: true })
+    }
+}
+
+impl<B: BackendMarker> GraphBuilderNode<'_, B>
+where
+    Select: GraphIROperationCompilable<B>,
+{
+    pub fn select_lo(self, buckets: Self) -> Self {
+        self.builder.apply(Select { input: self.node, buckets: buckets.node, lo: true, hi: false })
     }
 }
 
