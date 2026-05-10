@@ -1,5 +1,4 @@
 use acyclib::device::tensor::Tensor;
-use bullet_lib::nn::Shape;
 use bullet_lib::{
     game::{inputs::Chess768, outputs::KingOutputBuckets},
     nn::{Shape, optimiser::AdamW},
