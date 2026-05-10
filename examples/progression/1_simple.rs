@@ -1,6 +1,7 @@
+use acyclib::device::tensor::Tensor;
 use bullet_lib::{
     game::{inputs::Chess768, outputs::KingOutputBuckets},
-    nn::optimiser::AdamW,
+    nn::{Shape, optimiser::AdamW},
     trainer::{
         save::SavedFormat,
         schedule::{TrainingSchedule, TrainingSteps, lr, wdl},
@@ -41,20 +42,25 @@ fn main() {
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
-            SavedFormat::id("l1w").round().quantise::<i16>(64).transpose(),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 64),
+            SavedFormat::id("l1_stmw").round().quantise::<i16>(64).transpose(),
+            SavedFormat::id("l1_stmb").round().quantise::<i16>(255 * 64),
+            SavedFormat::id("l1_ntmw").round().quantise::<i16>(64).transpose(),
+            SavedFormat::id("l1_ntmb").round().quantise::<i16>(255 * 64),
         ])
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs, output_buckets| {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 1);
+            let l1_stm = builder.new_affine("l1_stm", hl_size, 15);
+            let l1_ntm = builder.new_affine("l1_ntm", hl_size, 15);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
-            let hidden_layer = stm_hidden.concat(ntm_hidden);
-            l1.forward(hidden_layer).select(output_buckets)
+            let res_stm = l1_stm.forward(stm_hidden).select(output_buckets);
+            let res_ntm = l1_ntm.forward(ntm_hidden).concat(ntm_hidden.slice_rows(0, 1)).select(output_buckets);
+            
+            res_stm + res_ntm
         });
 
     let schedule = TrainingSchedule {
