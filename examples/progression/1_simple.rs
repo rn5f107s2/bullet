@@ -1,6 +1,12 @@
+use acyclib::device::tensor::Tensor;
 use bullet_lib::{
+<<<<<<< HEAD
     game::{inputs::{Chess768}, outputs::KingOutputBuckets},
     nn::optimiser::AdamW,
+=======
+    game::{inputs::Chess768, outputs::KingOutputBuckets},
+    nn::{Shape, optimiser::AdamW},
+>>>>>>> 589db35 (maybe)
     trainer::{
         save::SavedFormat,
         schedule::{TrainingSchedule, TrainingSteps, lr, wdl},
@@ -41,32 +47,28 @@ fn main() {
         .inputs(Chess768)
         .output_buckets(KingOutputBuckets::new(OB_LAYOUT))
         .save_format(&[
-            SavedFormat::id("l0w").round().quantise::<i16>(403),
-            SavedFormat::id("l0b").round().quantise::<i16>(403),
-            SavedFormat::id("l1_factw").round().quantise::<i16>(64).transpose(),
-            SavedFormat::id("l1w").round().quantise::<i16>(64).transpose(),
-            SavedFormat::id("l1_factb").round().quantise::<i16>(403 * 64),
-            SavedFormat::id("l1b").round().quantise::<i16>(403 * 64),
+            SavedFormat::id("l0w").round().quantise::<i16>(255),
+            SavedFormat::id("l0b").round().quantise::<i16>(255),
+            SavedFormat::id("l1_stmw").round().quantise::<i16>(64).transpose(),
+            SavedFormat::id("l1_stmb").round().quantise::<i16>(255 * 64),
+            SavedFormat::id("l1_ntmw").round().quantise::<i16>(64).transpose(),
+            SavedFormat::id("l1_ntmb").round().quantise::<i16>(255 * 64),
         ])
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs, output_buckets| {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 15);
-            let l1_fact = builder.new_affine("l1f", 2 * hl_size, 1);
+            let l1_stm = builder.new_affine("l1_stm", hl_size, 15);
+            let l1_ntm = builder.new_affine("l1_ntm", hl_size, 15);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
-            let hidden_layer = stm_hidden.concat(ntm_hidden);
-            l1.forward(hidden_layer).select(output_buckets) + l1_fact.forward(hidden_layer)
+            let res_stm = l1_stm.forward(stm_hidden).select(output_buckets);
+            let res_ntm = l1_ntm.forward(ntm_hidden).concat(ntm_hidden.slice_rows(0, 1)).select(output_buckets);
+            
+            res_stm + res_ntm
         });
-
-    let stricter_clipping =  AdamWParams { max_weight: 0.635, min_weight: -0.635, ..Default::default() };
-    trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
-    trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
-    trainer.optimiser.set_params_for_weight("l1_factw", stricter_clipping);
-    trainer.optimiser.set_params_for_weight("l1_factb", stricter_clipping);
 
     let schedule = TrainingSchedule {
         net_id: "KingOutputBuckets".to_string(),
