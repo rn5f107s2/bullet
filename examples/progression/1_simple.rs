@@ -38,9 +38,9 @@ fn main() {
             let l1 = builder.new_affine("l1", hl_size, 1);
 
             // inference
-            let stm_hidden = l0.forward(stm_inputs).crelu().pairwise_mul();
-            let ntm_hidden = l0.forward(ntm_inputs).crelu().pairwise_mul();
-            let hidden_layer = stm_hidden.concat(ntm_hidden);
+            let stm_hidden = l0.forward(stm_inputs).crelu();
+            let ntm_hidden = l0.forward(ntm_inputs).crelu();
+            let hidden_layer = stm_hidden.concat(ntm_hidden).pairwise_mul();
             l1.forward(hidden_layer)
         });
 
