@@ -5,6 +5,8 @@
 typedef float(*OpType)(float);
 typedef float(*BinaryOpType)(float, float);
 
+constexpr int N = 16;
+
 constexpr int MaximumBlocksY = 32768;
 
 __device__ float Identity([[maybe_unused]] float in) { return in; }
@@ -306,10 +308,11 @@ BULLET_KERNEL PairwiseMulKernel(
 
     const int idxInBatch = tid / output_size;
     const int idxInOutput = tid % output_size;
+    const int idxInInput  = idxInOutput + (output_size - (N / 2)) * (tid % N >= (N / 2));
 
     const float* thisInp = input + 2 * output_size * idxInBatch + idxInOutput;
 
-    output[stride * idxInBatch + idxInOutput] = thisInp[0] * thisInp[output_size];
+    output[stride * idxInBatch + idxInOutput] = thisInp[0] * thisInp[N / 2];
 }
 
 BULLET_KERNEL PairwiseMulBackwardKernel(
@@ -327,15 +330,16 @@ BULLET_KERNEL PairwiseMulBackwardKernel(
 
     const int idxInBatch = tid / output_size;
     const int idxInOutput = tid % output_size;
+    const int idxInInput  = idxInOutput + (output_size - (N / 2)) * (tid % N >= (N / 2));
 
     const float gradIn = output_grad[stride * idxInBatch + idxInOutput];
     
-    const int inputOffset = 2 * output_size * idxInBatch + idxInOutput;
+    const int inputOffset = 2 * output_size * idxInBatch + idxInInput;
     const float* thisInput = input + inputOffset;
     float* thisInputGrad = input_grad + inputOffset;
 
-    thisInputGrad[0] += gradIn * thisInput[output_size];
-    thisInputGrad[output_size] += gradIn * thisInput[0];
+    thisInputGrad[0] += gradIn * thisInput[N / 2];
+    thisInputGrad[N / 2] += gradIn * thisInput[0];
 }
 
 BULLET_KERNEL PowerErrorKernel(

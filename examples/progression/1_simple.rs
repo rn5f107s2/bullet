@@ -38,8 +38,8 @@ fn main() {
             let l1 = builder.new_affine("l1", 2 * hl_size, 1);
 
             // inference
-            let stm_hidden = l0.forward(stm_inputs).screlu();
-            let ntm_hidden = l0.forward(ntm_inputs).screlu();
+            let stm_hidden = l0.forward(stm_inputs).crelu().pairwise_mul();
+            let ntm_hidden = l0.forward(ntm_inputs).crelu().pairwise_mul();
             let hidden_layer = stm_hidden.concat(ntm_hidden);
             l1.forward(hidden_layer)
         });
@@ -48,8 +48,8 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
-    let schedule = TrainingSchedule {
-        net_id: "DoubleShuffBuffHalfSkip".to_string(),
+    let schedule: TrainingSchedule<lr::CosineDecayLR, wdl::ConstantWDL> = TrainingSchedule {
+        net_id: "PairwiseAgain".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
