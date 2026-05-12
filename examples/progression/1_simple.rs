@@ -15,7 +15,7 @@ use viriformat::dataformat::Filter;
 
 fn main() {
     // hyperparams to fiddle with
-    let hl_size = 12 * 64 * 16;
+    let hl_size = 12 * 64 * 32;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
     let superbatches = 300;
@@ -49,7 +49,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "DoubleShuffBuffHalfSkip".to_string(),
+        net_id: "MiniAcc32".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
@@ -66,7 +66,7 @@ fn main() {
 
     let dataloader = ViriBinpackLoader::new(
         "/data/moly_oraclegcp_5ks_12khtempmix_fixed_4mntemp.vf",
-        8192,
+        8196,
         8,
         Filter {
             min_ply: 23,

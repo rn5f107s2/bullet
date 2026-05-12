@@ -40,7 +40,7 @@ pub struct CudaDevice {
 
 impl Default for CudaDevice {
     fn default() -> Self {
-        Self::new(0).unwrap()
+        Self::new(1).unwrap()
     }
 }
 

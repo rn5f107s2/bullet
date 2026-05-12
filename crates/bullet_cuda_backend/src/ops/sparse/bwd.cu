@@ -11,7 +11,7 @@ constexpr int MaximumBlocksY = DECL_MAXY;
 constexpr int m = DECL_M;
 constexpr int nnz = DECL_NNZ;
 
-constexpr int N = 16;
+constexpr int N = 32;
 constexpr int HL = N * 64;
 
 __device__ float op([[maybe_unused]] float x) {
