@@ -22,7 +22,7 @@ fn main() {
     let wdl_proportion = 0.5;
 
     let mut trainer = ValueTrainerBuilder::default()
-        .dual_perspective()
+        .single_perspective()
         .optimiser(AdamW)
         .inputs(Chess768)
         .save_format(&[
@@ -35,13 +35,11 @@ fn main() {
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 1);
+            let l1 = builder.new_affine("l1", hl_size, 1);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
-            let ntm_hidden = l0.forward(ntm_inputs).screlu();
-            let hidden_layer = stm_hidden.concat(ntm_hidden);
-            l1.forward(hidden_layer)
+            l1.forward(stm_hidden)
         });
 
     let stricter_clipping =  AdamWParams { max_weight: 1.27, min_weight: -1.27, ..Default::default() };
