@@ -32,7 +32,7 @@ fn main() {
             SavedFormat::id("l1b").round().quantise::<i16>(403 * 64),
         ])
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
-        .build(|builder, stm_inputs, ntm_inputs| {
+        .build(|builder, stm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
             let l1 = builder.new_affine("l1", hl_size, 1);
