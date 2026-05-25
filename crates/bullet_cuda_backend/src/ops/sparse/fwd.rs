@@ -24,7 +24,7 @@ pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
     let batched = indices.batch_size().is_some();
     let nnz = indices.sparse().nnz();
     let m = output_shape.rows();
-    let vectorise = false;
+    let vectorise = true;
 
     let code = kernel_str(bias, nnz, m, desc.activation, vectorise);
 
@@ -89,7 +89,7 @@ fn act_str(act: DiffableFromOutput) -> &'static str {
 fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFromOutput, vectorise: bool) -> String {
     let op = format!("__device__ float op(float x) {{ return {}; }}", act_str(activation));
 
-    let code = fallback_kernel(bias);
+    let code = vectorised_kernel(bias);
 
     let bias_args = if bias.is_some() { ", const float* B" } else { "" };
 
@@ -111,6 +111,69 @@ fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFrom
             const int row = blockIdx.x * blockDim.x + threadIdx.x;
             {code}
         }}"
+    )
+}
+
+fn vectorised_kernel(_bias: Option<bool>) -> String {
+    format!(
+        "
+        extern __shared__ int sX[];
+
+        constexpr int m4 = m / 4;
+
+        if (row >= m4 || loc >= k) return;
+
+        if (threadIdx.x < nnz)
+        {{
+            for (int i = threadIdx.x; i < nnz; i += blockDim.x)
+            {{
+                sX[i] = X[nnz * loc + i];
+            }}
+        }}
+
+        __syncthreads();
+
+        float4 val = make_float4(0.0F, 0.0F, 0.0F, 0.0F);
+
+        if ((row * 4) >= nnz * {N}) {{
+            reinterpret_cast<float4*>(Y)[m4 * loc + row] = val;
+            return;
+        }}
+
+        const int featIdx = (row * 4) / {N};
+        const int feat    = sX[featIdx];
+
+        if (feat == -1) {{
+            reinterpret_cast<float4*>(Y)[m4 * loc + row] = val;
+            return;
+        }}
+
+        const int pc = feat / 64;
+        const int sq = feat % 64;
+
+        const int idx = (row * 4) % {N};
+
+        const int nRow = pc * {HL} + sq * {N} + idx;
+
+        for (int i = 0; i < nnz; i++) {{
+            const int j = sX[i];
+
+            if (j == -1) break;
+
+            const float4 a = reinterpret_cast<const float4*>(A)[j * m4 + nRow];
+
+            val.x += a.x;
+            val.y += a.y;
+            val.z += a.z;
+            val.w += a.w;
+        }}
+
+        val.x = op(val.x);
+        val.y = op(val.y);
+        val.z = op(val.z);
+        val.w = op(val.w);
+
+        reinterpret_cast<float4*>(Y)[m4 * loc + row] = val;"
     )
 }
 
