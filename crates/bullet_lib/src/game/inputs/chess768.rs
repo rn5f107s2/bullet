@@ -2,6 +2,8 @@ use bulletformat::ChessBoard;
 
 use super::SparseInputType;
 
+use fastrand;
+    
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Chess768;
 impl SparseInputType for Chess768 {
@@ -18,13 +20,19 @@ impl SparseInputType for Chess768 {
     }
 
     fn map_features<F: FnMut(usize, usize)>(&self, pos: &Self::RequiredDataType, mut f: F) {
+        let mut flip = 0;
+
+        if pos.our_ksq() != 4 && pos.opp_ksq() != 4 { 
+            flip = if fastrand::bool() { 0 } else { 7 };
+        }
+
         for (piece, square) in pos.into_iter() {
             let c = usize::from(piece & 8 > 0);
             let pc = 64 * usize::from(piece & 7);
             let sq = usize::from(square);
 
-            let stm = [0, 384][c] + pc + (sq ^ 7);
-            let ntm = [384, 0][c] + pc + (sq ^ 63);
+            let stm = [0, 384][c] + pc + (sq ^ 7) ^ flip;
+            let ntm = [384, 0][c] + pc + (sq ^ 63) ^ flip;
             f(stm, ntm)
         }
     }

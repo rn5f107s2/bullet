@@ -25,6 +25,7 @@ bulletformat = { workspace = true }
 montyformat = { workspace = true }
 sfbinpack = "0.6.0"
 viriformat = { workspace = true }
+fastrand = "2.3"
 
 [[example]]
 name = "simple"
