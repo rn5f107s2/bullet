@@ -47,9 +47,13 @@ extern "C" __global__ void kernel(
 
     const int idx = row % N;
 
-    const int nRow = pc * HL + sq * N + idx;
+    const int flip = 7 * !!(sq & 4);
 
-    const float tE = op(Y[offset + nRow]) * Yg[offset + nRow];
+    const int base = pc * HL + idx;
+    const int nRow   = base + (sq ^ flip) * N;
+    const int outRow = base + sq * N;
+
+    const float tE = op(Y[offset + outRow]) * Yg[offset + outRow];
 
     for (int i = 0; i < nnz; i++) {
         const int j = tX[i];

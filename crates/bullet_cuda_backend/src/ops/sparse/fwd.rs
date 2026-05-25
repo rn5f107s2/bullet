@@ -137,7 +137,11 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
         const int idx = row % {N};
 
-        const int nRow = pc * {HL} + sq * {N} + idx;
+        const int flip = 7 * !!(sq & 4);
+
+        const int base = pc * {HL} + idx;
+        const int nRow   = base + (sq ^ flip) * {N};
+        const int outRow = base + sq * {N};
 
         for (int i = 0; i < nnz; i++) {{
             const int j = X[nnz * loc + i];
@@ -147,6 +151,6 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
             sum += A[j * m + nRow];
         }}
 
-        Y[m * loc + nRow] = op(sum);"
+        Y[m * loc + outRow] = op(sum);"
     )
 }
