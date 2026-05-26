@@ -101,9 +101,9 @@ fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFrom
 
         extern \"C\" __global__ void kernel(
             const int k,
-            const float* A,
-            const int* X,
-            float* Y{bias_args})
+            const __restrict__ float* A,
+            const __restrict__ int* X,
+            __restrict__ float* Y{bias_args})
         {{
             constexpr int m = {m};
             constexpr int nnz = {nnz};
