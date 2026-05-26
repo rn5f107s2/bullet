@@ -56,7 +56,7 @@ extern "C" __global__ void kernel(
     const float tE = op(Y[offset + outRow]) * Yg[offset + outRow];
 
     for (int i = 0; i < nnz; i++) {
-        const int j = tX[i];
+        const int j = tX[i] ^ flip;
 
         if (j == -1)
             break;
