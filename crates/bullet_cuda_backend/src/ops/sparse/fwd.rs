@@ -24,7 +24,7 @@ pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
     let batched = indices.batch_size().is_some();
     let nnz = indices.sparse().nnz();
     let m = output_shape.rows();
-    let vectorise = false;
+    let vectorise = true;
 
     let code = kernel_str(bias, nnz, m, desc.activation, vectorise);
 
@@ -89,7 +89,7 @@ fn act_str(act: DiffableFromOutput) -> &'static str {
 fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFromOutput, vectorise: bool) -> String {
     let op = format!("__device__ float op(float x) {{ return {}; }}", act_str(activation));
 
-    let code = fallback_kernel(bias);
+    let code = if vectorise { vectorised_kernel(bias) } else { fallback_kernel(bias) };
 
     let bias_args = if bias.is_some() { ", const float* B" } else { "" };
 
@@ -111,6 +111,62 @@ fn kernel_str(bias: Option<bool>, nnz: usize, m: usize, activation: DiffableFrom
             const int row = blockIdx.x * blockDim.x + threadIdx.x;
             {code}
         }}"
+    )
+}
+
+// Claude slop
+fn vectorised_kernel(_bias: Option<bool>) -> String {
+    // One thread covers 4 consecutive output elements via float4 loads/stores.
+    // Requires: m % 4 == 0, N % 4 == 0, caller launches m/4 threads in x.
+    format!(
+        "
+        // Each thread owns a group of 4 consecutive rows
+        if (row >= m / 4 || loc >= k) return;
+        const int row4 = row * 4;  // first scalar row this thread owns
+
+        // --- Vectorised zero-out (128-bit store) ---
+        reinterpret_cast<float4*>(Y + m * loc)[row] = make_float4(0.f, 0.f, 0.f, 0.f);
+
+        if (row4 >= nnz * {N})
+            return;
+
+        // Index derivation is identical to the scalar kernel, but for the
+        // first element of the group; the remaining three are at +1/+2/+3.
+        float4 sum = make_float4(0.0F, 0.0F, 0.0F, 0.0F);
+        const int featIdx = row4 / {N};
+        const int feat    = X[nnz * loc + featIdx];
+        if (feat == -1)
+            return;
+
+        const int pc   = feat / 64;
+        const int sq   = feat % 64;
+        const int idx  = row4 % {N};   // always 4-aligned because N%4==0
+        const int flip = 7 * !!(sq & 4);
+        const int base = pc * {HL} + idx;
+        const int nRow   = base + (sq ^ flip) * {N};  // load  base (4-aligned)
+        const int outRow = base + sq * {N};            // store base (4-aligned)
+
+        // --- Inner accumulation loop with vectorised 128-bit loads ---
+        // A[j*m + nRow .. nRow+3] are contiguous floats → single float4 load
+        for (int i = 0; i < nnz; i++) {{
+            const int j = X[nnz * loc + i] ^ flip;
+            if (j == -1) break;
+            const float4 a = reinterpret_cast<const float4*>(A + j * m + nRow)[0];
+            sum.x += a.x;
+            sum.y += a.y;
+            sum.z += a.z;
+            sum.w += a.w;
+        }}
+
+        // Apply activation element-wise
+        sum.x = op(sum.x);
+        sum.y = op(sum.y);
+        sum.z = op(sum.z);
+        sum.w = op(sum.w);
+
+        // --- Vectorised store (128-bit) ---
+        // Y[m*loc + outRow .. outRow+3] are contiguous → single float4 store
+        reinterpret_cast<float4*>(Y + m * loc + outRow)[0] = sum;"
     )
 }
 
