@@ -24,7 +24,7 @@ pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
     let batched = indices.batch_size().is_some();
     let nnz = indices.sparse().nnz();
     let m = output_shape.rows();
-    let vectorise = false;
+    let vectorise = true;
 
     let code = kernel_str(bias, nnz, m, desc.activation, vectorise);
 
@@ -130,11 +130,17 @@ fn vectorised_kernel(_bias: Option<bool>) -> String {
         if (row4 >= nnz * {N})
             return;
 
+        // At block start — cooperatively load X slice into L1
+        __shared__ int sX[nnz];
+        if (threadIdx.x < nnz)
+            sX[threadIdx.x] = X[nnz * loc + threadIdx.x];
+        __syncthreads();
+
         // Index derivation is identical to the scalar kernel, but for the
         // first element of the group; the remaining three are at +1/+2/+3.
         float4 sum = make_float4(0.0F, 0.0F, 0.0F, 0.0F);
         const int featIdx = row4 / {N};
-        const int feat    = X[nnz * loc + featIdx];
+        const int feat    = sX[nnz * loc + featIdx];
         if (feat == -1)
             return;
 
@@ -149,7 +155,7 @@ fn vectorised_kernel(_bias: Option<bool>) -> String {
         // --- Inner accumulation loop with vectorised 128-bit loads ---
         // A[j*m + nRow .. nRow+3] are contiguous floats → single float4 load
         for (int i = 0; i < nnz; i++) {{
-            const int j = X[nnz * loc + i] ^ flip;
+            const int j = sX[nnz * loc + i] ^ flip;
             if (j == -1) break;
             const float4 a = reinterpret_cast<const float4*>(A + j * m + nRow)[0];
             sum.x += a.x;
