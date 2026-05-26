@@ -18,13 +18,16 @@ impl SparseInputType for Chess768 {
     }
 
     fn map_features<F: FnMut(usize, usize)>(&self, pos: &Self::RequiredDataType, mut f: F) {
+        let flip_stm = if pos.our_ksq() & 4 != 0 { 0 } else { 7 };
+        let flip_ntm = if pos.opp_ksq() & 4 != 0 { 0 } else { 7 };
+
         for (piece, square) in pos.into_iter() {
             let c = usize::from(piece & 8 > 0);
             let pc = 64 * usize::from(piece & 7);
             let sq = usize::from(square);
 
-            let stm = [0, 384][c] + pc + (sq ^ 7);
-            let ntm = [384, 0][c] + pc + (sq ^ 63);
+            let stm = [0, 384][c] + pc + (sq ^ 7)  ^ flip_stm;
+            let ntm = [384, 0][c] + pc + (sq ^ 63) ^ flip_ntm;
             f(stm, ntm)
         }
     }

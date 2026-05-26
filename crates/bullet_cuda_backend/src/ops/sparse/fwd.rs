@@ -146,7 +146,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
         for (int i = 0; i < nnz; i++) {{
             const int j = X[nnz * loc + i] ^ flip;
 
-            if (j == -1) break;
+            if (j <= -1) break;
 
             sum += A[j * m + nRow];
         }}
