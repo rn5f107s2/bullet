@@ -156,7 +156,7 @@ fn vectorised_kernel(_bias: Option<bool>) -> String {
         // A[j*m + nRow .. nRow+3] are contiguous floats → single float4 load
         for (int i = 0; i < nnz; i++) {{
             const int j = sX[i] ^ flip;
-            if (j == -1) break;
+            if (j <= -1) break;
             const float4 a = reinterpret_cast<const float4*>(A + j * m + nRow)[0];
             sum.x += a.x;
             sum.y += a.y;
