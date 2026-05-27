@@ -55,13 +55,14 @@ extern "C" __global__ void kernel(
 
     const float tE = op(Y[offset + outRow]) * Yg[offset + outRow];
 
-    for (int i = 0; i < nnz; i++) {
-        const int j = tX[i] ^ flip;
+    if (tE != 0.0F) {
+        for (int i = 0; i < nnz; i++) {
+            const int j = tX[i] ^ flip;
 
-        if (j <= -1)
-            break;
+            if (j <= -1)
+                break;
 
-        if (tE != 0.0F)
             atomicAdd(&Ag[j * m + nRow], tE);
+        }
     }
 }
