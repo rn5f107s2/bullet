@@ -58,7 +58,7 @@ extern "C" __global__ void kernel(
     for (int i = 0; i < nnz; i++) {
         const int j = tX[i] ^ flip;
 
-        if (j == -1)
+        if (j <= -1)
             break;
 
         if (tE != 0.0F)
