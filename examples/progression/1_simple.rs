@@ -40,14 +40,14 @@ fn main() {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
             let l1 = builder.new_affine("l1", 2 * hl_size, 8);
-            let l2 = builder.new_affine("l2", 8, 16);
-            let l3 = builder.new_affine("l3", 16, 1);
+            let l2 = builder.new_affine("l2", 8, 32);
+            let l3 = builder.new_affine("l3", 32, 1);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
             let hidden_layer = stm_hidden.concat(ntm_hidden);
-            let l1_out = l1.forward(hidden_layer).screlu();
+            let l1_out = l1.forward(hidden_layer).relu();
             let l2_out = l2.forward(l1_out).screlu();
             l3.forward(l2_out)
         });
