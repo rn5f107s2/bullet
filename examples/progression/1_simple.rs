@@ -28,8 +28,8 @@ fn main() {
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
-            SavedFormat::id("l1w").round().quantise::<i16>(100),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 100),
+            SavedFormat::id("l1w").round().quantise::<i16>(193),
+            SavedFormat::id("l1b").round().quantise::<i16>(255 * 193),
             SavedFormat::id("l2w").round().quantise::<i16>(8192),
             SavedFormat::id("l2b").round().quantise::<i16>(8192),
             SavedFormat::id("l3w").round().quantise::<i16>(8192),
@@ -52,12 +52,12 @@ fn main() {
             l3.forward(l2_out)
         });
 
-    let stricter_clipping =  AdamWParams { max_weight: 1.27, min_weight: -1.27, ..Default::default() };
+    let stricter_clipping =  AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
     trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "WeNeedToGoDeeper".to_string(),
+        net_id: "WeNeedToGoDeeperQ193".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
