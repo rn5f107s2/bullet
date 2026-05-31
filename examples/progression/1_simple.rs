@@ -29,7 +29,7 @@ fn main() {
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
             SavedFormat::id("l1w").round().quantise::<i16>(193),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 193),
+            SavedFormat::id("l1b").round().quantise::<i16>(255 * 127),
             SavedFormat::id("l2w").round().quantise::<i16>(8192),
             SavedFormat::id("l2b").round().quantise::<i16>(8192),
             SavedFormat::id("l3w").round().quantise::<i16>(8192),
@@ -40,15 +40,15 @@ fn main() {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
             let l1 = builder.new_affine("l1", 2 * hl_size, 8);
-            let l2 = builder.new_affine("l2", 8, 32);
+            let l2 = builder.new_affine("l2", 2 * 8, 32);
             let l3 = builder.new_affine("l3", 32, 1);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
             let hidden_layer = stm_hidden.concat(ntm_hidden);
-            let l1_out = l1.forward(hidden_layer).relu();
-            let l2_out = l2.forward(l1_out).screlu();
+            let l1_out = l1.forward(hidden_layer);
+            let l2_out = l2.forward(l1_out.relu().concat((-l1_out).relu())).screlu();
             l3.forward(l2_out)
         });
 
