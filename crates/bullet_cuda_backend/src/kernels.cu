@@ -307,9 +307,9 @@ BULLET_KERNEL PairwiseMulKernel(
     const int idxInBatch = tid / output_size;
     const int idxInOutput = tid % output_size;
 
-    const float* thisInp = input + 2 * output_size * idxInBatch + idxInOutput;
+    const float* thisInp = input + 2 * output_size * idxInBatch + idxInOutput * 2;
 
-    output[stride * idxInBatch + idxInOutput] = thisInp[0] * thisInp[output_size];
+    output[stride * idxInBatch + idxInOutput] = thisInp[0] * thisInp[1];
 }
 
 BULLET_KERNEL PairwiseMulBackwardKernel(
@@ -330,12 +330,12 @@ BULLET_KERNEL PairwiseMulBackwardKernel(
 
     const float gradIn = output_grad[stride * idxInBatch + idxInOutput];
     
-    const int inputOffset = 2 * output_size * idxInBatch + idxInOutput;
+    const int inputOffset = 2 * output_size * idxInBatch + idxInOutput * 2;
     const float* thisInput = input + inputOffset;
     float* thisInputGrad = input_grad + inputOffset;
 
-    thisInputGrad[0] += gradIn * thisInput[output_size];
-    thisInputGrad[output_size] += gradIn * thisInput[0];
+    thisInputGrad[0] += gradIn * thisInput[1];
+    thisInputGrad[1] += gradIn * thisInput[0];
 }
 
 BULLET_KERNEL PowerErrorKernel(
