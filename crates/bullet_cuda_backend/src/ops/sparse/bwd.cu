@@ -51,7 +51,7 @@ extern "C" __global__ void kernel(
 
     const int base = pc * HL + idx;
     const int nRow   = base + (sq ^ flip) * N;
-    const int outRow = base + sq * N;
+    const int outRow = (base + sq * N) % (2 * HL);
 
     const float tE = op(Y[offset + outRow]) * Yg[offset + outRow];
 
