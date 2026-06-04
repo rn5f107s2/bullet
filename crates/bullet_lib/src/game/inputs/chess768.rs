@@ -9,7 +9,7 @@ impl SparseInputType for Chess768 {
 
     /// The total number of inputs
     fn num_inputs(&self) -> usize {
-        768 * 6
+        768 * 12
     }
 
     /// The maximum number of active inputs
