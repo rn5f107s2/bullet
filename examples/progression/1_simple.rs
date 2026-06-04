@@ -28,36 +28,37 @@ fn main() {
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
-            SavedFormat::id("l1w").round().quantise::<i16>(193),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 193),
-            SavedFormat::id("l2w").round().quantise::<i16>(8192),
-            SavedFormat::id("l2b").round().quantise::<i16>(8192),
-            SavedFormat::id("l3w").round().quantise::<i16>(8192),
-            SavedFormat::id("l3b").round().quantise::<i16>(8192),
         ])
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 8);
-            let l2 = builder.new_affine("l2", 8, 32);
-            let l3 = builder.new_affine("l3", 32, 1);
+
+            let mut l1_x = Vec::new();
+
+            for i in 0..128 {
+                l1_x.push(builder.new_affine(&format!("l1_{i}"), 32 * 12, 1));
+            }
+
+            let l2 = builder.new_affine("l2", 128, 1);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
             let hidden_layer = stm_hidden.concat(ntm_hidden);
-            let l1_out = l1.forward(hidden_layer).relu();
-            let l2_out = l2.forward(l1_out).screlu();
-            l3.forward(l2_out)
+
+            let mut l1_out = l1_x[0].forward(hidden_layer.slice_rows(0, 12 * 32));
+
+            for i in 1..128 {
+                l1_out = l1_out.concat(l1_x[i].forward(hidden_layer.slice_rows(12 * 32 * i, 12 * 32 * (i + 1))));
+            }
+
+            l2.forward(l1_out.screlu())
         });
 
-    let stricter_clipping =  AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
-    trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
-    trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "WeNeedToGoDeeperQ193".to_string(),
+        net_id: "Test".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
@@ -73,7 +74,7 @@ fn main() {
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 32 };
 
     let dataloader = ViriBinpackLoader::new(
-        "/data/moly_v1.vf",
+        "data/ moly_oraclegcp_5ks_12khtempmix_fixed.vf",
         8196,
         8,
         Filter {
