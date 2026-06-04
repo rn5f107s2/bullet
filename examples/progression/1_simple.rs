@@ -47,8 +47,9 @@ fn main() {
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
             let hidden_layer = stm_hidden.concat(ntm_hidden);
+
             let l1_out = l1.forward(hidden_layer);
-            let l2_out = l2.forward(l1_out.screlu().concat((-l1_out).screlu())).screlu();
+            let l2_out = l2.forward(l1_out.screlu().concat((-l1_out).screlu())).crelu();
             l3.forward(l2_out)
         });
 
@@ -57,7 +58,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "DualActSCRSCRSCR".to_string(),
+        net_id: "dualActivationSCReLUSCReLUCReLU".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
