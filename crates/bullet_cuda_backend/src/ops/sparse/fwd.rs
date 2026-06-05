@@ -140,16 +140,15 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
         const int flip = 7 * !!(sq & 4);
 
-        const int base   = c * {HL} + idx;
-        const int nRow   = base + (sq ^ flip) * {N};
-        const int outRow = base + sq * {N};
+        const int nRow   = pc * {HL} + idx + (sq ^ flip) * {N};
+        const int outRow = c  * {HL} + idx + sq * {N};
 
         for (int i = 0; i < nnz; i++) {{
             const int j = X[nnz * loc + i] ^ flip;
 
             if (j <= -1) break;
 
-            sum += A[j * m + nRow];
+            sum += A[j * m * 6 + nRow];
         }}
 
         Y[m * loc + outRow] = op(sum);"
