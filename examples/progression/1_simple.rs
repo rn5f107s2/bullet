@@ -26,39 +26,31 @@ fn main() {
         .optimiser(AdamW)
         .inputs(Chess768)
         .save_format(&[
-            SavedFormat::id("l0w").round().quantise::<i16>(255),
-            SavedFormat::id("l0b").round().quantise::<i16>(255),
-            SavedFormat::id("l1w").round().quantise::<i16>(193),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 127),
-            SavedFormat::id("l2w").round().quantise::<i16>(8192),
-            SavedFormat::id("l2b").round().quantise::<i16>(8192),
-            SavedFormat::id("l3w").round().quantise::<i16>(8192),
-            SavedFormat::id("l3b").round().quantise::<i16>(8192),
+            SavedFormat::id("l0w").round().quantise::<i16>(403),
+            SavedFormat::id("l0b").round().quantise::<i16>(403),
+            SavedFormat::id("l1w").round().quantise::<i16>(64),
+            SavedFormat::id("l1b").round().quantise::<i16>(403 * 64),
         ])
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
-            let l0 = builder.new_affine("l0", 768, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 8);
-            let l2 = builder.new_affine("l2", 2 * 8, 32);
-            let l3 = builder.new_affine("l3", 32, 1);
+            let l0 = builder.new_affine("l0", 768 * 6, hl_size);
+            let l1 = builder.new_affine("l1", 2 * hl_size, 1);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu();
             let ntm_hidden = l0.forward(ntm_inputs).screlu();
             let hidden_layer = stm_hidden.concat(ntm_hidden);
-
-            let l1_out = l1.forward(hidden_layer);
-            let l2_out = l2.forward(l1_out.screlu().concat((-l1_out).screlu())).crelu();
-            l3.forward(l2_out)
+        
+            l1.forward(hidden_layer)
         });
 
-    let stricter_clipping =  AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
+    let stricter_clipping =  AdamWParams { max_weight: 1.27, min_weight: -1.27, ..Default::default() };
     trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "dualActivationSCReLUSCReLUCReLU".to_string(),
+        net_id: "OnlyColorBuckets".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
