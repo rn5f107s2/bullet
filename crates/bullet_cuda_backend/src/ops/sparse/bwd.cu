@@ -50,9 +50,8 @@ extern "C" __global__ void kernel(
 
     const int flip = 7 * !!(sq & 4);
 
-    const int base   = c * HL + idx;
-    const int nRow   = base + (sq ^ flip) * N;
-    const int outRow = (base + sq * N);
+    const int nRow   = pc * HL + idx + (sq ^ flip) * N;
+    const int outRow = c  * HL + idx + sq * N;
 
     const float tE = op(Y[offset + outRow]) * Yg[offset + outRow];
 
@@ -63,6 +62,6 @@ extern "C" __global__ void kernel(
             break;
 
         if (tE != 0.0F)
-            atomicAdd(&Ag[j * m + nRow], tE);
+            atomicAdd(&Ag[j * m * 6 + nRow], tE);
     }
 }

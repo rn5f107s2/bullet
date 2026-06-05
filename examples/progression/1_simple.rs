@@ -50,7 +50,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "OnlyColorBucketsFixed".to_string(),
+        net_id: "OnlyColorBucketsFixedFr?".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
