@@ -44,14 +44,15 @@ extern "C" __global__ void kernel(
 
     const int pc = feat / 64;
     const int sq = feat % 64;
+    const int c  = pc < 6;
 
     const int idx = row % N;
 
     const int flip = 7 * !!(sq & 4);
 
-    const int base = pc * HL + idx;
+    const int base   = c * HL + idx;
     const int nRow   = base + (sq ^ flip) * N;
-    const int outRow = (base + sq * N) % (2 * HL);
+    const int outRow = (base + sq * N);
 
     const float tE = op(Y[offset + outRow]) * Yg[offset + outRow];
 
