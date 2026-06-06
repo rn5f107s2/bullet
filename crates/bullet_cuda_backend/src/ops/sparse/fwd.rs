@@ -143,16 +143,11 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
         const int nRow   = pc * {HL} + idx + (sq ^ flip) * {N};
         const int outRow = c  * {HL} + idx + sq * {N};
 
-        printf(\"hello\n\");
-
         for (int i = 0; i < nnz; i++) {{
             const int j = X[nnz * loc + i] ^ flip;
 
-            printf(\"using weight %d for bpc %d bsq %d featurefeature %d\\n\", j * m + nRow, pc, sq, j);
-
             if (j <= -1) break;
 
-            printf(\"hello\n\");
             printf(\"bpc: %d bsq: %d feat: %d weight_index: %d weight: %3.f out_index: %d \n\", pc, sq, j, j * m * 6 + nRow, A[j * m * 6 + nRow], outRow);
 
             sum += A[j * m * 6 + nRow];
