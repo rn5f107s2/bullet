@@ -143,6 +143,8 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
         const int nRow   = pc * {HL} + idx + (sq ^ flip) * {N};
         const int outRow = c  * {HL} + idx + sq * {N};
 
+        printf(\"hello\n\");
+
         for (int i = 0; i < nnz; i++) {{
             const int j = X[nnz * loc + i] ^ flip;
 
