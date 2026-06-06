@@ -148,6 +148,8 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
             if (j <= -1) break;
 
+            printf(\"bpc: %d bsq: %d feat: %d weight_index: %d weight: %3.f out_index: %d \", pc, sq, j, j * m * 6 + nRow, A[j * m * 6 + nRow], outRow);
+
             sum += A[j * m * 6 + nRow];
         }}
 
