@@ -148,6 +148,8 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
         for (int i = 0; i < nnz; i++) {{
             const int j = X[nnz * loc + i] ^ flip;
 
+            printf(\"using weight %d for bpc %d bsq %d featurefeature %d\\n\", j * m + nRow, pc, sq, j);
+
             if (j <= -1) break;
 
             printf(\"hello\n\");
