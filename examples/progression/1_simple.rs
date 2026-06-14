@@ -15,7 +15,7 @@ use viriformat::dataformat::Filter;
 
 fn main() {
     // hyperparams to fiddle with
-    let hl_size = 2 * 64 * 32;
+    let hl_size = 12 * 64 * 32;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
     let superbatches = 300;
@@ -34,12 +34,12 @@ fn main() {
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
-            let l0 = builder.new_affine("l0", 768 * 6, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 1);
+            let l0 = builder.new_affine("l0", 768, hl_size);
+            let l1 = builder.new_affine("l1", 2 * 2 * 64 * 32, 1);
 
             // inference
-            let stm_hidden = l0.forward(stm_inputs).screlu();
-            let ntm_hidden = l0.forward(ntm_inputs).screlu();
+            let stm_hidden = l0.forward(stm_inputs).screlu().slice_rows(0, 2 * 64 * 32);
+            let ntm_hidden = l0.forward(ntm_inputs).screlu().slice_rows(0, 2 * 64 * 32);
             let hidden_layer = stm_hidden.concat(ntm_hidden);
         
             l1.forward(hidden_layer)
@@ -50,7 +50,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "OnlyColorBucketsFixed2".to_string(),
+        net_id: "OnlyColorBucketsConfused2".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
