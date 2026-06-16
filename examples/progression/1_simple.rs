@@ -34,7 +34,7 @@ fn main() {
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
-            let l0 = builder.new_affine("l0", 768, hl_size);
+            let l0 = builder.new_affine("l0", 768 * 6, hl_size);
             let l1 = builder.new_affine("l1", 2 * 2 * 64 * 32, 1);
 
             // inference
@@ -50,7 +50,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "OnlyColorBucketsConfused2".to_string(),
+        net_id: "OnlyColorBucketsConfused2Bisect".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
