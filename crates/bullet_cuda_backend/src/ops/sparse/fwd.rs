@@ -148,7 +148,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
             if (j <= -1) break;
 
-            sum += A[j * m + nRow];
+            sum += A[j * 24576 + nRow];
         }}
 
         Y[m * loc + outRow] = op(sum);"
