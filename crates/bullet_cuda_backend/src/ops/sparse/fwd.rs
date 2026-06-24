@@ -11,8 +11,6 @@ const N: u32 = 32;
 const HL: u32 = N * 64;
 
 pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
-    println!("expected");
-
     let output_shape = desc.weights_shape * desc.input_shape;
     let indices = desc.indices;
 
@@ -65,6 +63,8 @@ pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
         let chunks = m.div_ceil(threads);
         (chunks, threads, 0)
     };
+
+    println!("m: {m}");
 
     let ky = batch_size.min(&MAXIMUM_BLOCKS_Y);
     let kz = (batch_size + MAXIMUM_BLOCKS_Y - 1) / MAXIMUM_BLOCKS_Y;
