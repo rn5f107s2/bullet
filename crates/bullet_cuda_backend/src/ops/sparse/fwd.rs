@@ -150,7 +150,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
             if (j <= -1) break;
 
-            printf(\"%d\n\", j * 24576 + nRow);
+            printf(\"%d\\n\", j * 24576 + nRow);
 
             sum += A[j * 24576 + nRow];
         }}
