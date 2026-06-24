@@ -11,6 +11,8 @@ const N: u32 = 32;
 const HL: u32 = N * 64;
 
 pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
+    println!("expected");
+
     let output_shape = desc.weights_shape * desc.input_shape;
     let indices = desc.indices;
 

@@ -121,6 +121,8 @@ const MAXIMUM_BLOCKS_Y: i32 = 32768;
 
 impl GraphIROperationCompilable<CudaMarker> for SparseAffineUnaryMatmul {
     fn forward_pass(&self, graph: &Graph<CudaDevice>, output_node: NodeId) -> DeviceFunction<CudaDevice> {
+        println!("sjndfajsm");
+
         let mut func = DeviceFunction::default();
 
         let weights = graph.get_ref(self.weights.idx, GraphNodeIdTy::Values);
