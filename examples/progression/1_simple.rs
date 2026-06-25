@@ -18,7 +18,7 @@ fn main() {
     let hl_size = 6 * 64 * 32;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
-    let superbatches = 300;
+    let superbatches = 20;
     let wdl_proportion = 0.5;
 
     let mut trainer = ValueTrainerBuilder::default()
@@ -50,7 +50,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "OnlyColorBucketsConfused2Bisect2".to_string(),
+        net_id: "Dbuggin".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
@@ -89,7 +89,7 @@ fn main() {
         }
     );
 
-    // trainer.run(&schedule, &settings, &dataloader);
+    trainer.run(&schedule, &settings, &dataloader);
     // trainer.load_from_checkpoint("checkpoints/OnlyColorBucketsConfused2Bisect2-300/optimiser_state");
 
     for fen in [
