@@ -150,9 +150,6 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
             if (j <= -1) break;
 
-            if (k == 1)
-                printf(\"%d %d\\n\", j * 24576 + nRow, (int) round(A[j * 24576 + nRow] * 403));
-
             sum += A[j * 24576 + nRow];
         }}
 
