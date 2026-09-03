@@ -37,6 +37,8 @@ fn main() {
             let l0 = builder.new_affine("l0", 768 * 6, hl_size);
             let l1 = builder.new_affine("l1", 2 * hl_size, 1);
 
+            l1.init_with_effective_input_size(6 * hl_size);
+
             // inference
             // i dont knwo if or why the slice is necessary
             let stm_hidden = l0.forward(stm_inputs).screlu().slice_rows(0, hl_size);
