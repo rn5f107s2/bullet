@@ -18,7 +18,7 @@ fn main() {
     let hl_size = 2 * 64 * 32;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
-    let superbatches = 20;
+    let superbatches = 300;
     let wdl_proportion = 0.5;
 
     let mut trainer = ValueTrainerBuilder::default()
