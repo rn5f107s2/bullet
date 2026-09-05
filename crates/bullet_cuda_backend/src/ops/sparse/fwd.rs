@@ -7,7 +7,7 @@ use crate::{
 
 const MAXIMUM_BLOCKS_Y: u32 = 32768;
 
-const N: u32 = 32;
+const N: u32 = 48;
 const HL: u32 = N * 64;
 
 pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {
@@ -150,7 +150,7 @@ fn fallback_kernel(_bias: Option<bool>) -> String {
 
             if (j <= -1) break;
 
-            sum += A[j * 24576 + nRow];
+            sum += A[j * 6 * m + nRow];
         }}
 
         Y[m * loc + outRow] = op(sum);"

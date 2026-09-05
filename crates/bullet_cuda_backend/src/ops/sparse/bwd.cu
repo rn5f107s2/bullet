@@ -11,7 +11,7 @@ constexpr int MaximumBlocksY = DECL_MAXY;
 constexpr int m = DECL_M;
 constexpr int nnz = DECL_NNZ;
 
-constexpr int N = 32;
+constexpr int N = 48;
 constexpr int HL = N * 64;
 
 __device__ float op([[maybe_unused]] float x) {
@@ -62,7 +62,6 @@ extern "C" __global__ void kernel(
             break;
 
         if (tE != 0.0F)
-            /* ????????????? */
-            atomicAdd(&Ag[j * 24576 + nRow], tE);
+            atomicAdd(&Ag[j * 6 * m + nRow], tE);
     }
 }
