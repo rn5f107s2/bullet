@@ -7,7 +7,7 @@ use crate::{
 
 const MAXIMUM_BLOCKS_Y: u32 = 32768;
 
-const N: u32 = 48;
+const N: u32 = 64;
 const HL: u32 = N * 64;
 
 pub fn kernel(desc: function::SparseAffineActivate<CudaDevice>) -> Kernel {

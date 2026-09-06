@@ -15,7 +15,7 @@ use viriformat::dataformat::Filter;
 
 fn main() {
     // hyperparams to fiddle with
-    let hl_size = 2 * 64 * 48;
+    let hl_size = 2 * 64 * 64;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
     let superbatches = 300;
@@ -53,7 +53,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "CertainlyBig".to_string(),
+        net_id: "CertainlyHuge".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
