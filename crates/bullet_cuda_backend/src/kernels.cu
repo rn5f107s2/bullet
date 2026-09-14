@@ -292,6 +292,8 @@ BULLET_KERNEL ClipKernel(const int size, float* params, const float min_weight, 
     }
 }
 
+// ASSUMES COLOR ONLY OB
+
 BULLET_KERNEL PairwiseMulKernel(
     const int stride,
     const int output_size,
@@ -307,9 +309,17 @@ BULLET_KERNEL PairwiseMulKernel(
     const int idxInBatch = tid / output_size;
     const int idxInOutput = tid % output_size;
 
-    const float* thisInp = input + 2 * output_size * idxInBatch + idxInOutput;
+    const int N = output_size / 64;
+    const int HALF_N = N / 2;
 
-    output[stride * idxInBatch + idxInOutput] = thisInp[0] * thisInp[output_size];
+    const int block      = idxInOutput / HALF_N;
+    const int idxInBlock = idxInOutput % HALF_N; 
+
+    const int blockBegin = block * N;
+
+    const float* thisInp = input + 2 * output_size * idxInBatch + blockBegin + idxInBlock;
+
+    output[stride * idxInBatch + idxInOutput] = thisInp[0] * thisInp[HALF_N];
 }
 
 BULLET_KERNEL PairwiseMulBackwardKernel(
@@ -328,14 +338,22 @@ BULLET_KERNEL PairwiseMulBackwardKernel(
     const int idxInBatch = tid / output_size;
     const int idxInOutput = tid % output_size;
 
+    const int N = output_size / 64;
+    const int HALF_N = N / 2;
+
+    const int block      = idxInOutput / HALF_N;
+    const int idxInBlock = idxInOutput % HALF_N; 
+
+    const int blockBegin = block * N;
+
     const float gradIn = output_grad[stride * idxInBatch + idxInOutput];
     
-    const int inputOffset = 2 * output_size * idxInBatch + idxInOutput;
+    const int inputOffset = 2 * output_size * idxInBatch + blockBegin + idxInBlock;
     const float* thisInput = input + inputOffset;
     float* thisInputGrad = input_grad + inputOffset;
 
-    thisInputGrad[0] += gradIn * thisInput[output_size];
-    thisInputGrad[output_size] += gradIn * thisInput[0];
+    thisInputGrad[0     ] += gradIn * thisInput[HALF_N];
+    thisInputGrad[HALF_N] += gradIn * thisInput[0     ];
 }
 
 BULLET_KERNEL PowerErrorKernel(
