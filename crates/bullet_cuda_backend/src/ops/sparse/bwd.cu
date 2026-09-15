@@ -63,6 +63,6 @@ extern "C" __global__ void kernel(
 
         if (tE != 0.0F)
             /* ????????????? */
-            atomicAdd(&Ag[j * 24576 + nRow], tE);
+            atomicAdd(&Ag[j * 24576 / 2 + nRow], tE);
     }
 }
