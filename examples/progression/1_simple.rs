@@ -15,7 +15,7 @@ use viriformat::dataformat::Filter;
 
 fn main() {
     // hyperparams to fiddle with
-    let hl_size = 2 * 64 * 32;
+    let hl_size = 2 * 64 * 16;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
     let superbatches = 300;
@@ -39,16 +39,16 @@ fn main() {
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768 * 6, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 16);
-            let l2 = builder.new_affine("l2", 8, 32);
+            let l1 = builder.new_affine("l1", 2 * hl_size, 32);
+            let l2 = builder.new_affine("l2", 32, 32);
             let l3 = builder.new_affine("l3", 32, 1);
 
             l1.init_with_effective_input_size(6 * hl_size);
 
             // inference
             // i dont knwo if or why the slice is necessary
-            let stm_hidden = l0.forward(stm_inputs).crelu().slice_rows(0, hl_size).pairwise_mul();
-            let ntm_hidden = l0.forward(ntm_inputs).crelu().slice_rows(0, hl_size).pairwise_mul();
+            let stm_hidden = l0.forward(stm_inputs).screlu().slice_rows(0, hl_size);
+            let ntm_hidden = l0.forward(ntm_inputs).screlu().slice_rows(0, hl_size);
             let hidden_layer = stm_hidden.concat(ntm_hidden);
 
             let l1_out = l1.forward(hidden_layer).relu();
@@ -63,7 +63,7 @@ fn main() {
 
 
     let schedule = TrainingSchedule {
-        net_id: "PairwiseMaybe".to_string(),
+        net_id: "HalfL1FourTimesL2".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
