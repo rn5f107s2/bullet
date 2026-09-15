@@ -29,7 +29,7 @@ fn main() {
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
             SavedFormat::id("l1w").round().quantise::<i16>(193),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 193),
+            SavedFormat::id("l1b").round().quantise::<i16>(255 * 127),
             SavedFormat::id("l2w").round().quantise::<i16>(8192),
             SavedFormat::id("l2b").round().quantise::<i16>(8192),
             SavedFormat::id("l3w").round().quantise::<i16>(8192),
@@ -39,8 +39,8 @@ fn main() {
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768 * 6, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 32);
-            let l2 = builder.new_affine("l2", 32, 32);
+            let l1 = builder.new_affine("l1", 2 * hl_size, 24);
+            let l2 = builder.new_affine("l2", 24, 32);
             let l3 = builder.new_affine("l3", 32, 1);
 
             l1.init_with_effective_input_size(6 * hl_size);
