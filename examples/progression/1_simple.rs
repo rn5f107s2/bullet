@@ -63,7 +63,7 @@ fn main() {
 
 
     let schedule = TrainingSchedule {
-        net_id: "HalfL1FourTimesL2".to_string(),
+        net_id: "HalfL1ThreeTimesL2".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
