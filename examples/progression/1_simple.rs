@@ -41,12 +41,13 @@ fn main() {
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768 * 6, hl_size);
-            let l1_stm = builder.new_affine("l1_stm", 2 * hl_size, 8);
-            let l1_ntm = builder.new_affine("l1_ntm", 2 * hl_size, 8);
+            let l1_stm = builder.new_affine("l1_stm", hl_size, 8);
+            let l1_ntm = builder.new_affine("l1_ntm", hl_size, 8);
             let l2 = builder.new_affine("l2", 24, 32);
             let l3 = builder.new_affine("l3", 32, 1);
 
-            l1.init_with_effective_input_size(6 * hl_size);
+            l1_stm.init_with_effective_input_size(6 * hl_size);
+            l1_ntm.init_with_effective_input_size(6 * hl_size);
 
             // inference
             let stm_hidden = l0.forward(stm_inputs).screlu().slice_rows(0, hl_size);
