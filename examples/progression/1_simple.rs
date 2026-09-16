@@ -41,7 +41,7 @@ fn main() {
             // weights
             let l0 = builder.new_affine("l0", 768 * 6, hl_size);
             let l1 = builder.new_affine("l1", 2 * hl_size, l2_size);
-            let l2 = builder.new_affine("l2", l2_size, 32);
+            let l2 = builder.new_affine("l2", l2_size - 1, 32);
             let l3 = builder.new_affine("l3", 32, 1);
 
             l1.init_with_effective_input_size(6 * hl_size);
@@ -54,7 +54,7 @@ fn main() {
 
             let l1_out = l1.forward(hidden_layer);
             let skip   = l1_out.slice_rows(0, 1);
-            let l1_activated = l1_out.relu();
+            let l1_activated = l1_out.slice_rows(1, hl_size).relu();
             let l2_out = l2.forward(l1_out).screlu();
 
             let out = l3.forward(l2_out) + skip;
