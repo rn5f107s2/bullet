@@ -16,6 +16,7 @@ use viriformat::dataformat::Filter;
 fn main() {
     // hyperparams to fiddle with
     let hl_size = 2 * 64 * 32;
+    let l2_size = 8;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
     let superbatches = 300;
@@ -39,8 +40,8 @@ fn main() {
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768 * 6, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 8);
-            let l2 = builder.new_affine("l2", 8, 32);
+            let l1 = builder.new_affine("l1", 2 * hl_size, l2_size);
+            let l2 = builder.new_affine("l2", l2_size, 32);
             let l3 = builder.new_affine("l3", 32, 1);
 
             l1.init_with_effective_input_size(6 * hl_size);
@@ -51,10 +52,12 @@ fn main() {
             let ntm_hidden = l0.forward(ntm_inputs).screlu().slice_rows(0, hl_size);
             let hidden_layer = stm_hidden.concat(ntm_hidden);
 
-            let l1_out = l1.forward(hidden_layer).relu();
+            let l1_out = l1.forward(hidden_layer);
+            let skip   = l1_out.slice_rows(0, 1);
+            let l1_activated = l1_out.relu();
             let l2_out = l2.forward(l1_out).screlu();
 
-            l3.forward(l2_out)
+            l3.forward(l2_out) + skip
         });
 
     let stricter_clipping = AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
@@ -63,7 +66,7 @@ fn main() {
 
 
     let schedule = TrainingSchedule {
-        net_id: "MultilayerRevisited".to_string(),
+        net_id: "SkipSome".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
