@@ -54,7 +54,7 @@ fn main() {
 
             let l1_out = l1.forward(hidden_layer);
             let skip   = l1_out.slice_rows(0, 1);
-            let l1_activated = l1_out.slice_rows(1, hl_size).relu();
+            let l1_activated = l1_out.slice_rows(1, l2_size).relu();
             let l2_out = l2.forward(l1_out).screlu();
 
             let out = l3.forward(l2_out) + skip;
