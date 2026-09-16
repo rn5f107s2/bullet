@@ -30,7 +30,7 @@ fn main() {
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
             SavedFormat::id("l1w").round().quantise::<i16>(193),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 193),
+            SavedFormat::id("l1b").round().quantise::<i16>(255 * 127),
             SavedFormat::id("l2w").round().quantise::<i16>(8192),
             SavedFormat::id("l2b").round().quantise::<i16>(8192),
             SavedFormat::id("l3w").round().quantise::<i16>(8192),
