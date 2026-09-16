@@ -28,8 +28,10 @@ fn main() {
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
-            SavedFormat::id("l1w").round().quantise::<i16>(193),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 193),
+            SavedFormat::id("l1_stmw").round().quantise::<i16>(193),
+            SavedFormat::id("l1_ntmw").round().quantise::<i16>(193),
+            SavedFormat::id("l1_stmb").round().quantise::<i16>(255 * 127),
+            SavedFormat::id("l1_ntmb").round().quantise::<i16>(255 * 127),
             SavedFormat::id("l2w").round().quantise::<i16>(8192),
             SavedFormat::id("l2b").round().quantise::<i16>(8192),
             SavedFormat::id("l3w").round().quantise::<i16>(8192),
@@ -39,31 +41,33 @@ fn main() {
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768 * 6, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 16);
-            let l2 = builder.new_affine("l2", 8, 32);
+            let l1_stm = builder.new_affine("l1_stm", 2 * hl_size, 8);
+            let l1_ntm = builder.new_affine("l1_ntm", 2 * hl_size, 8);
+            let l2 = builder.new_affine("l2", 24, 32);
             let l3 = builder.new_affine("l3", 32, 1);
 
             l1.init_with_effective_input_size(6 * hl_size);
 
             // inference
-            // i dont knwo if or why the slice is necessary
-            let stm_hidden = l0.forward(stm_inputs).crelu().slice_rows(0, hl_size).pairwise_mul();
-            let ntm_hidden = l0.forward(ntm_inputs).crelu().slice_rows(0, hl_size).pairwise_mul();
-            let hidden_layer = stm_hidden.concat(ntm_hidden);
-
-            let l1_out = l1.forward(hidden_layer).relu();
+            let stm_hidden = l0.forward(stm_inputs).screlu().slice_rows(0, hl_size);
+            let ntm_hidden = l0.forward(ntm_inputs).screlu().slice_rows(0, hl_size);
+            let l1_out_stm = l1_stm.forward(stm_hidden);
+            let l1_out_ntm = l1_ntm.forward(ntm_hidden);
+            let l1_out_both = l1_out_stm + l1_out_ntm;
+            let l1_out = l1_out_both.concat(l1_out_stm).concat(l1_out_ntm).relu();
             let l2_out = l2.forward(l1_out).screlu();
 
             l3.forward(l2_out)
         });
 
-    let stricter_clipping = AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
-    trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
-    trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
-
+    let stricter_clipping =  AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
+    trainer.optimiser.set_params_for_weight("l1_stmw", stricter_clipping);
+    trainer.optimiser.set_params_for_weight("l1_ntmw", stricter_clipping);
+    trainer.optimiser.set_params_for_weight("l1_stmb", stricter_clipping);
+    trainer.optimiser.set_params_for_weight("l1_ntmb", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "PairwiseMaybe".to_string(),
+        net_id: "DeeperPerspectiveAgain".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
