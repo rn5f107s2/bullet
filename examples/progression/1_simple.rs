@@ -57,7 +57,9 @@ fn main() {
             let l1_activated = l1_out.relu();
             let l2_out = l2.forward(l1_out).screlu();
 
-            l3.forward(l2_out) + skip
+            let out = l3.forward(l2_out) + skip;
+
+            out
         });
 
     let stricter_clipping = AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
