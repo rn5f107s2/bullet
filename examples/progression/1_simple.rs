@@ -63,7 +63,7 @@ fn main() {
 
 
     let schedule = TrainingSchedule {
-        net_id: "MultilayerRevisited".to_string(),
+        net_id: "DeeperLeecheese".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
@@ -79,7 +79,7 @@ fn main() {
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 32 };
 
     let dataloader = ViriBinpackLoader::new(
-        "/data/moly_v1.vf",
+        "/data/moly_v2.vf",
         8196,
         8,
         Filter {
