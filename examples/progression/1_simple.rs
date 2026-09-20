@@ -29,7 +29,7 @@ fn main() {
             SavedFormat::id("l0w").round().quantise::<i16>(255),
             SavedFormat::id("l0b").round().quantise::<i16>(255),
             SavedFormat::id("l1w").round().quantise::<i16>(193),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 193),
+            SavedFormat::id("l1b").round().quantise::<i16>(255 * 127),
             SavedFormat::id("l2w").round().quantise::<i16>(8192),
             SavedFormat::id("l2b").round().quantise::<i16>(8192),
             SavedFormat::id("l3w").round().quantise::<i16>(8192),
@@ -42,8 +42,6 @@ fn main() {
             let l1 = builder.new_affine("l1", 2 * hl_size, 8);
             let l2 = builder.new_affine("l2", 8, 32);
             let l3 = builder.new_affine("l3", 32, 1);
-
-            l1.init_with_effective_input_size(6 * hl_size);
 
             // inference
             // i dont knwo if or why the slice is necessary
@@ -63,7 +61,7 @@ fn main() {
 
 
     let schedule = TrainingSchedule {
-        net_id: "DeeperLeecheese".to_string(),
+        net_id: "NoInitHack".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
