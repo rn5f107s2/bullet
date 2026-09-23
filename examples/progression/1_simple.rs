@@ -15,7 +15,7 @@ use viriformat::dataformat::Filter;
 
 fn main() {
     // hyperparams to fiddle with
-    let hl_size = 2 * 64 * 32;
+    const hl_size : u32 = 2 * 64 * 32;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
     let superbatches = 300;
@@ -35,8 +35,7 @@ fn main() {
             SavedFormat::id("l3w").round().quantise::<i16>(8192),
             SavedFormat::id("l3b").round().quantise::<i16>(8192),
         ])
-        .loss_fn(|output, target| output.sigmoid().squared_error(target))
-        .build(|builder, stm_inputs, ntm_inputs| {
+        .build_custom(|builder, (stm_inputs, ntm_inputs), target| {
             // weights
             let l0 = builder.new_affine("l0", 768 * 6, hl_size);
             let l1 = builder.new_affine("l1", 2 * hl_size, 8);
@@ -50,11 +49,18 @@ fn main() {
             let stm_hidden = l0.forward(stm_inputs).screlu().slice_rows(0, hl_size);
             let ntm_hidden = l0.forward(ntm_inputs).screlu().slice_rows(0, hl_size);
             let hidden_layer = stm_hidden.concat(ntm_hidden);
+            let ones_l1_vec = builder.new_constant(Shape::new(1, hl_size * 2), &[1.0 / (hl_size * 2) as f32; (hl_size * 2) as usize]);
+            let l0_out_norm = ones_l1_vec.matmul(hidden_layer);
 
             let l1_out = l1.forward(hidden_layer).relu();
             let l2_out = l2.forward(l1_out).screlu();
 
-            l3.forward(l2_out)
+            let l3_out = l3.forward(l2_out);
+
+            let loss = l3_out.sigmoid().squared_error(target);
+            let loss = loss + 0.005 * l0_out_norm;
+
+            (l3_out, loss)
         });
 
     let stricter_clipping = AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
@@ -63,7 +69,7 @@ fn main() {
 
 
     let schedule = TrainingSchedule {
-        net_id: "DeeperLeecheese".to_string(),
+        net_id: "L0Reg".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
