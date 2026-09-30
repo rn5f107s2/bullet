@@ -34,14 +34,18 @@ fn main() {
             SavedFormat::id("l2b").round().quantise::<i16>(8192),
             SavedFormat::id("l3w").round().quantise::<i16>(8192),
             SavedFormat::id("l3b").round().quantise::<i16>(8192),
+            SavedFormat::id("l4w").round().quantise::<i16>(8192),
+            SavedFormat::id("l4b").round().quantise::<i16>(8192),
         ])
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768 * 6, hl_size);
             let l1 = builder.new_affine("l1", 2 * hl_size, 8);
-            let l2 = builder.new_affine("l2", 8, 32);
-            let l3 = builder.new_affine("l3", 32, 1);
+            let l2 = builder.new_affine("l2", 8, 8);
+            let l3 = builder.new_affine("l3", 16, 8);
+            let l3 = builder.new_affine("l3", 24, 8);
+            let l4 = builder.new_affine("l4", 32, 1);
 
             l1.init_with_effective_input_size(6 * hl_size);
 
@@ -52,9 +56,10 @@ fn main() {
             let hidden_layer = stm_hidden.concat(ntm_hidden);
 
             let l1_out = l1.forward(hidden_layer).relu();
-            let l2_out = l2.forward(l1_out).screlu();
+            let l2_out = l2.forward(l1_out).relu().concat(l1_out);
+            let l3_out = l3.forward(l2_out).relu().concat(l2_out);
 
-            l3.forward(l2_out)
+            l4.forward(l3_out)
         });
 
     let stricter_clipping = AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
@@ -63,7 +68,7 @@ fn main() {
 
 
     let schedule = TrainingSchedule {
-        net_id: "DeeperLeecheese".to_string(),
+        net_id: "SeerSkipping".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
