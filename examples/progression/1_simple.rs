@@ -59,7 +59,7 @@ fn main() {
             let l2_out = l2.forward(l1_out).relu().concat(l1_out);
             let l3_out = l3.forward(l2_out).relu().concat(l2_out);
 
-            l4.forward(l3_out)
+            l4.forward(l3_out.concat(l2_out))
         });
 
     let stricter_clipping = AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
