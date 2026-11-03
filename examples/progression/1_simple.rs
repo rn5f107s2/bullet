@@ -27,7 +27,7 @@ fn main() {
         .dual_perspective()
         .optimiser(AdamW)
         .inputs(Chess768)
-        .output_buckets(MaterialCount::<NUM_OUTPUT_BUCKETS>)
+        .output_buckets(Phase::<NUM_OUTPUT_BUCKETS>)
         .save_format(&[
             SavedFormat::id("l0w").round().quantise::<i16>(403),
             SavedFormat::id("l0b").round().quantise::<i16>(403),
@@ -56,7 +56,7 @@ fn main() {
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "Oberbuergermeister".to_string(),
+        net_id: "PhaseOututBuckets".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
@@ -72,7 +72,7 @@ fn main() {
     let settings = LocalSettings { threads: 4, test_set: None, output_directory: "checkpoints", batch_queue_size: 32 };
 
     let dataloader = ViriBinpackLoader::new(
-        "/data/moly_v1.vf",
+        "/data/moly_v2.vf",
         8196,
         8,
         Filter {
