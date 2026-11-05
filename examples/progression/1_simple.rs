@@ -1,6 +1,6 @@
 use bullet_lib::{
     game::inputs::Chess768,
-    game::outputs::MaterialCount,
+    game::outputs::Phase,
     nn::optimiser::AdamW,
     nn::optimiser::AdamWParams,
     trainer::{
