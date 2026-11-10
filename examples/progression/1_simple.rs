@@ -48,12 +48,12 @@ fn main() {
             l1.forward(hidden_layer)
         });
 
-    let stricter_clipping =  AdamWParams { max_weight: 1.27, min_weight: -1.27, ..Default::default() };
+    let stricter_clipping =  AdamWParams { max_weight: 1.27, min_weight: -1.27, decay: 0.02, ..Default::default() };
     trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
     trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
 
     let schedule = TrainingSchedule {
-        net_id: "Leecheese".to_string(),
+        net_id: "MoreWeightDecay".to_string(),
         eval_scale: 133.0,
         steps: TrainingSteps {
             batch_size: 16384,
