@@ -29,16 +29,23 @@ fn main() {
         .dual_perspective()
         .optimiser(AdamW)
         .inputs(Chess768)
-        .save_format(&[
-            SavedFormat::id("l0w").round().quantise::<i16>(255),
-            SavedFormat::id("l0b").round().quantise::<i16>(255),
-            SavedFormat::id("l1w").round().quantise::<i16>(193),
-            SavedFormat::id("l1b").round().quantise::<i16>(255 * 127),
-            SavedFormat::id("l2w").round().quantise::<i16>(8192),
-            SavedFormat::id("l2b").round().quantise::<i16>(8192),
-            SavedFormat::id("l3w").round().quantise::<i16>(8192),
-            SavedFormat::id("l3b").round().quantise::<i16>(8192),
-        ])
+        .save_format(&{
+            let mut fmt = vec![
+                SavedFormat::id("l0w").round().quantise::<i16>(255),
+                SavedFormat::id("l0b").round().quantise::<i16>(255),
+            ];
+            // all l1_x weights first...
+            for j in 0..256 {
+                fmt.push(SavedFormat::id(&format!("l1_{j}w")).round().quantise::<i16>(193));
+            }
+            // ...then all l1_x biases.
+            for j in 0..256 {
+                fmt.push(SavedFormat::id(&format!("l1_{j}b")).round().quantise::<i16>(255 * 127));
+            }
+            fmt.push(SavedFormat::id("l2w").round().quantise::<i16>(8192));
+            fmt.push(SavedFormat::id("l2b").round().quantise::<i16>(8192));
+            fmt
+        })
         .loss_fn(|output, target| output.sigmoid().squared_error(target))
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
@@ -76,8 +83,10 @@ fn main() {
         });
 
     let stricter_clipping = AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
-    trainer.optimiser.set_params_for_weight("l1w", stricter_clipping);
-    trainer.optimiser.set_params_for_weight("l1b", stricter_clipping);
+    for l1 in 0..256 {
+        trainer.optimiser.set_params_for_weight(&format!("l1_{l1}w"), stricter_clipping);
+        trainer.optimiser.set_params_for_weight(&format!("l1_{l1}b"), stricter_clipping);
+    }
 
 
     let schedule = TrainingSchedule {
