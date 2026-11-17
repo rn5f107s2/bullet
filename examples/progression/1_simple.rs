@@ -66,7 +66,7 @@ fn main() {
             let ntm_hidden = l0.forward(ntm_inputs).screlu().slice_rows(0, hl_size);
 
             let mut l1_out = l1_x[0].forward(stm_hidden.slice_rows(0, miniacc))
-                        .add(l1_x[64 ].forward(stm_hidden.slice_rows(miniacc * 64, miniacc)))
+                        .add(l1_x[64 ].forward(stm_hidden.slice_rows(miniacc * 64, miniacc * 65)))
                         .add(l1_x[128].forward(ntm_hidden.slice_rows(0, miniacc)))
                         .add(l1_x[192].forward(ntm_hidden.slice_rows(miniacc * 64, miniacc * 65)));
 
