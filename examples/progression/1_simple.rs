@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use bullet_lib::{
     game::inputs::Chess768,
     nn::optimiser::AdamW,
@@ -15,7 +17,9 @@ use viriformat::dataformat::Filter;
 
 fn main() {
     // hyperparams to fiddle with
-    let hl_size = 2 * 64 * 32;
+    let miniacc = 32;
+    let buckets = 2 * 64;
+    let hl_size = buckets * miniacc;
     let initial_lr = 0.001;
     let final_lr = 0.001_f32.powf(5.0);
     let superbatches = 300;
@@ -39,22 +43,36 @@ fn main() {
         .build(|builder, stm_inputs, ntm_inputs| {
             // weights
             let l0 = builder.new_affine("l0", 768 * 6, hl_size);
-            let l1 = builder.new_affine("l1", 2 * hl_size, 8);
-            let l2 = builder.new_affine("l2", 8, 32);
-            let l3 = builder.new_affine("l3", 32, 1);
 
-            l1.init_with_effective_input_size(6 * hl_size);
+            let mut l1_x = Vec::new();
+
+            for i in 0..256 {
+                l1_x.push(builder.new_affine(&format!("l1_{i}"), miniacc, 8));
+                l1_x[i].init_with_effective_input_size(6 * hl_size);
+            }
+
+            let l2 = builder.new_affine("l2", 64 * 8, 1);
 
             // inference
             // i dont knwo if or why the slice is necessary
             let stm_hidden = l0.forward(stm_inputs).screlu().slice_rows(0, hl_size);
             let ntm_hidden = l0.forward(ntm_inputs).screlu().slice_rows(0, hl_size);
-            let hidden_layer = stm_hidden.concat(ntm_hidden);
 
-            let l1_out = l1.forward(hidden_layer).relu();
-            let l2_out = l2.forward(l1_out).screlu();
+            let mut l1_out = l1_x[0].forward(stm_hidden.slice_rows(0, miniacc))
+                        .add(l1_x[64 ].forward(stm_hidden.slice_rows(miniacc * 64, miniacc)))
+                        .add(l1_x[128].forward(ntm_hidden.slice_rows(0, miniacc)))
+                        .add(l1_x[192].forward(ntm_hidden.slice_rows(miniacc * 64, miniacc * 65)));
 
-            l3.forward(l2_out)
+            for i in 1..64 {
+                let sub_out = l1_x[i].forward(stm_hidden.slice_rows(miniacc * i, miniacc * (i + 1)))
+                        .add(l1_x[64  + i].forward(stm_hidden.slice_rows(miniacc * (64 + i), miniacc * (64 + i + 1))))
+                        .add(l1_x[128 + i].forward(ntm_hidden.slice_rows(miniacc * i, miniacc * (i + 1))))
+                        .add(l1_x[192 + i].forward(ntm_hidden.slice_rows(miniacc * (64 + i), miniacc * (64 + i + 1))));
+
+                l1_out = l1_out.concat(sub_out);
+            }
+
+            l2.forward(l1_out.crelu())
         });
 
     let stricter_clipping = AdamWParams { max_weight: 0.66, min_weight: -0.66, ..Default::default() };
